@@ -1,5 +1,7 @@
 # Arkiv Ideathon — August 2026
 
+[![verify](https://github.com/PugarHuda/arkiv-ideathon/actions/workflows/verify.yml/badge.svg)](https://github.com/PugarHuda/arkiv-ideathon/actions/workflows/verify.yml) — tsc against the published SDK · 17 invariants · Playwright page QA on Linux, every push
+
 Two entries for *What can YOU [ ARKIV ] ?*, the Arkiv Network ideathon (ideas + Arkiv data-model design, no deployment). One idea per track, as the rules allow.
 
 | Entry | Track | Closes | Write-up | Form answers |
