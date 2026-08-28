@@ -31,6 +31,8 @@ submissions/
   selisih.sketch.ts               entity-model sketch — type-checks against @arkiv-network/sdk@0.7.0
   layak.sketch.ts                 entity-model sketch — type-checks against @arkiv-network/sdk@0.7.0
   evidence/                       everything that is evidence rather than description — see its README
+  video/                          LAYAK.mp4 · SELISIH.mp4 — Playwright screen recordings of the live pages with burned-in
+                                  narration, wrapped by Remotion (intro/outro). 1080p, ~1:48 each. Nothing staged.
 ```
 
 ## What is verified, and how
@@ -44,6 +46,7 @@ Nothing here is deployed — the event forbids it and there is no open Arkiv net
 | Independent observers of a DeFi market really do disagree, hardest under stress | Chainlink vs Uniswap ETH/USD at the same block, 62 blocks across the 5 Aug 2024 crash and a calm window, via archive `eth_call` | `evidence/killtest.py`, `killtest.txt`, `killtest.json` |
 | The incumbent oracle's own nodes disagree — and the disagreement is discarded | 179 `NewTransmission` rounds decoded; per-node observations attributed by index | `evidence/chainlink_nodes.py`, `chainlink_nodes.json`, `chainlink_round_20458998.json` |
 | Both write-ups use (or explicitly decline) every documented Arkiv primitive | `python audit.py submissions/01-defi-selisih.md submissions/02-other-layak.md` | `audit.py` |
+| The walkthrough videos show the real pages | Playwright `recordVideo` against the public GitHub Pages URLs; captions injected into the DOM at known timestamps; Remotion adds title/outro cards — recorder and compositions are reproducible | `submissions/video/` |
 | The artifact pages render correctly | Playwright: light/dark contrast, no horizontal overflow at 375 px and 929 px, SVG `role`/`aria-label`, no console errors | done in-session; not scripted |
 
 ## Reproducing the evidence
