@@ -1,0 +1,16 @@
+name: verify
+on: [push, pull_request]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install --no-audit --no-fund
+      - name: Sketches type-check against the published SDK
+        run: npm run check
+      - name: Executable invariants (17)
+        run: npm run test:invariants
+      - name: Page QA with Playwright (local static server)
+        run: npx playwright install --with-deps chromium && npm run qa:site

@@ -93,7 +93,7 @@ And the inverse is the sharper half. A witness whose reading turns out to be dam
 
 All numerics are **integers**; decimals are scaled to fixed point and the scale is named in the attribute key. All timestamps are unix seconds.
 
-**Every entity carries `app: "selisih"`.** Arkiv is one shared, public database — my entities sit beside everyone else's, and `kind: "snapshot"` is a word other projects will reach for too. There is no namespace primitive to lean on, so the namespace is an attribute, it is on every entity, and it is the first term of every predicate in §5. Without it, the divergence board is one naming collision away from rendering somebody else's data as a witness disagreement, which is the most embarrassing possible failure for a product about evidence.
+**Every entity carries `project: "selisih"`.** Arkiv is one shared, public database — my entities sit beside everyone else's, and `type: "snapshot"` is a word other projects will reach for too. There is no namespace primitive to lean on, so the namespace is an attribute, it is on every entity, and it is the first term of every predicate in §5. Without it, the divergence board is one naming collision away from rendering somebody else's data as a witness disagreement, which is the most embarrassing possible failure for a product about evidence.
 
 ### `RiskSnapshot` — append-only, never updated
 
@@ -101,8 +101,8 @@ The atom. One witness's view of one market at one round.
 
 | Attribute | Type | Notes |
 | :--- | :--- | :--- |
-| `app` | string | `"selisih"` — the project namespace, on **every** entity in the model (see below) |
-| `kind` | string | `"snapshot"` — discriminator, `eq()` only |
+| `project` | string | `"selisih"` — the project namespace, on **every** entity in the model (see below) |
+| `type` | string | `"snapshot"` — discriminator, `eq()` only |
 | `market` | string | e.g. `"aave-v3-eth-wsteth"` — `eq()` only, so it is an exact slug |
 | `round` | numeric | monotonic round id; the join key across witnesses |
 | `blockNumber` | numeric | the block the witness read |
@@ -130,7 +130,7 @@ Payload: a compact JSON of the top-K at-risk positions (ids + `healthFactorBps`)
 
 | Attribute | Type | Notes |
 | :--- | :--- | :--- |
-| `app` / `kind` | string | `"selisih"` / `"commit"` |
+| `project` / `type` | string | `"selisih"` / `"commit"` |
 | `market` | string | |
 | `round` | numeric | |
 | `digest` | string | hash of the reading plus a per-round salt — the committer is `$creator`, read natively |
@@ -148,7 +148,7 @@ The cost of the pattern is one extra cheap write per round and a minute of laten
 
 | Attribute | Type | Notes |
 | :--- | :--- | :--- |
-| `kind` | string | `"witness"` |
+| `type` | string | `"witness"` |
 | `witness` | string | address |
 | `market` | string | the market this witness covers |
 | `bondRef` | string | pointer to the stake held in a contract off-Arkiv |
@@ -159,7 +159,7 @@ The cost of the pattern is one extra cheap write per round and a minute of laten
 
 ### `RosterEpoch` — append-only, long-lived
 
-`kind`, `market`, `epoch` (numeric), `roundFrom` / `roundTo` (numeric), `witnessCount` (numeric); payload lists the witness addresses live during that epoch. Written once a day, **lifetime 1 year**.
+`type`, `market`, `epoch` (numeric), `roundFrom` / `roundTo` (numeric), `witnessCount` (numeric); payload lists the witness addresses live during that epoch. Written once a day, **lifetime 1 year**.
 
 This entity exists because of a lifetime mismatch that would otherwise be a silent correctness bug — see §11. Registrations expire in days; disputed snapshots live for months; so "who was on the roster in round 812" cannot be answered by querying live registrations. `RosterEpoch` stores that fact while it is still true.
 
@@ -167,7 +167,7 @@ This entity exists because of a lifetime mismatch that would otherwise be a sile
 
 | Attribute | Type | Notes |
 | :--- | :--- | :--- |
-| `kind` | string | `"dispute"` |
+| `type` | string | `"dispute"` |
 | `disputeId` | string | uuid |
 | `market` | string | |
 | `roundFrom` / `roundTo` | numeric | the range of evidence being frozen |
@@ -182,7 +182,7 @@ This entity exists because of a lifetime mismatch that would otherwise be a sile
 
 | Attribute | Type | Notes |
 | :--- | :--- | :--- |
-| `kind` | string | `"pin"` |
+| `type` | string | `"pin"` |
 | `market` / `round` | string / numeric | the reading being pinned |
 | `pinnedWitness` | string | whose reading it was |
 | `originTxHash` | string | the original write, checkable on-chain forever |
@@ -215,34 +215,34 @@ Written once, never edited; `$creator` is the arbiter, so a resolution cannot be
 
 Written against the real constraints: string attributes support `eq()` only, range operators work on numerics, results come back newest-first with no server-side ORDER BY, and a `limit` applied before a client-side sort gives you the top of a page rather than a true global top-N. Every query below is therefore designed so the **filter** narrows the set to something one page holds, and sorting is cosmetic.
 
-Every predicate below is prefixed with `eq(app,"selisih")`, elided here for readability but never in the code — in a shared public database it is the term that keeps the whole result set mine.
+Every predicate below is prefixed with `eq(project,"selisih")`, elided here for readability but never in the code — in a shared public database it is the term that keeps the whole result set mine.
 
 **Q1 — The divergence check (the core screen).**
-`eq(kind,"snapshot") AND eq(market,"aave-v3-eth-wsteth") AND eq(round, 812)`
+`eq(type,"snapshot") AND eq(market,"aave-v3-eth-wsteth") AND eq(round, 812)`
 Returns one row per witness for that round — bounded by roster size, so a single page holds it. The client computes median, spread and outliers. The query the whole product is built around needs no ordering at all.
 
 **Q2 — Who is missing.** A `count` on Q1's predicate, compared against a `count` of live `WitnessRegistration` for that market. If 7 are registered and 6 reported, the seventh row of the dashboard is the interesting one. A precision the SDK forced: in 0.7.0 `.count()` returns the length of **one page** (≤200), not a server-side total — fine for a roster, and the sketch pages-and-sums for anything that could exceed it.
 
 **Q3 — Witness track record, as two numbers.**
-`.createdBy(0x…)` with `eq(kind,"snapshot") AND gte(severityTier, 3)` — times this witness broke from its peers. Creator filtering is a native builder method, not an attribute predicate.
-`eq(kind,"resolution") AND eq(vindicatedWitness, 0x…)` — times it broke from them and was right.
+`.createdBy(0x…)` with `eq(type,"snapshot") AND gte(severityTier, 3)` — times this witness broke from its peers. Creator filtering is a native builder method, not an attribute predicate.
+`eq(type,"resolution") AND eq(vindicatedWitness, 0x…)` — times it broke from them and was right.
 
 One number alone is misleading, and which one you drop decides what the product rewards. `severityTier` is a **coarse integer bucket that exists purely to make the first filter narrow enough to be an honest top-N** — `deviationBps > 50` alone would match more than a page can hold, and sorting a page is not ranking a set. This is reputation the witness cannot edit and no operator can quietly launder.
 
 **Q3b — Conviction.**
-`eq(kind,"snapshot") AND eq(market, M) AND gte(fundedDays, 30)`
+`eq(type,"snapshot") AND eq(market, M) AND gte(fundedDays, 30)`
 Every reading someone paid to keep alive well past the dispute window. Because cost is size × lifetime, this filter returns the readings their own authors were willing to spend on — a signal no conventional database can produce, because in a conventional database storage duration is an operations decision and costs the writer nothing.
 
 **Q4 — Danger scan across a market.**
-`eq(kind,"snapshot") AND eq(market, M) AND lt(healthFactorBps, 10500) AND gte(round, N)`
+`eq(type,"snapshot") AND eq(market, M) AND lt(healthFactorBps, 10500) AND gte(round, N)`
 Everything near the liquidation threshold in the recent window, per witness. A numeric health factor is what makes this possible; stored as text it would be unqueryable.
 
 **Q5 — Open disputes, and the pin queue.**
-`eq(kind,"dispute") AND eq(statusCode, 0) AND gte(deadlineTs, now)`
-For each open dispute the UI then runs `eq(kind,"snapshot") AND eq(market,M) AND gte(round, from) AND lte(round, to) AND lt(expiresAtTs, deadlineTs)` — **the readings that will lapse before the dispute they matter to is resolved.** That list is the product's call to action: anyone who cares can pin them, at their own cost, before they go. A conventional system would silently delete them on schedule and nobody would know what had been lost.
+`eq(type,"dispute") AND eq(statusCode, 0) AND gte(deadlineTs, now)`
+For each open dispute the UI then runs `eq(type,"snapshot") AND eq(market,M) AND gte(round, from) AND lte(round, to) AND lt(expiresAtTs, deadlineTs)` — **the readings that will lapse before the dispute they matter to is resolved.** That list is the product's call to action: anyone who cares can pin them, at their own cost, before they go. A conventional system would silently delete them on schedule and nobody would know what had been lost.
 
 **Q6 — Regulator / underwriter pull.**
-`eq(kind,"snapshot") AND eq(market, M) AND gte(observedTs, T0) AND lte(observedTs, T1)`
+`eq(type,"snapshot") AND eq(market, M) AND gte(observedTs, T0) AND lte(observedTs, T1)`
 The full multi-witness record of an incident window, cursor-paginated, verifiable by the reader against `$creator` and tx hashes without asking the protocol for anything.
 
 ## 6. Expiry, extension and ownership as product features
@@ -267,7 +267,7 @@ Neither renewal nor lapse needs an operator to act, so the historical roster can
 | :--- | :--- |
 | Typed attributes, numeric | `healthFactorBps`, `priceE8`, `round`, `severityTier` — every value the product filters on |
 | Integer-only numerics | prices ×1e8, debt ×1e6, health in basis points; the scale is in the attribute name |
-| String attributes (`eq` only) | `market`, `witness`, `kind` — enumerated slugs, never free text |
+| String attributes (`eq` only) | `market`, `witness`, `type` — enumerated slugs, never free text |
 | Shared attribute keys | `market`+`round` joins witnesses; `disputeId`, `market`+`epoch` |
 | `$creator` | attribution on every reading — the reputation primitive |
 | `$owner` + `changeOwnership` | operational control of a registration, separated from authorship |
@@ -282,7 +282,7 @@ Neither renewal nor lapse needs an operator to act, so the historical roster can
 | Cursor pagination | the incident pull (Q6) |
 | Tx hashes | rendered next to each reading, so the reader verifies rather than trusts |
 | Hash commitments | the `Commit` round — Arkiv's guidance is to store commitments, not secrets |
-| Project namespace | `app: "selisih"` on every entity — a shared public database has no other separation |
+| Project namespace | `project: "selisih"` on every entity — a shared public database has no other separation |
 
 ### Who pays for the writes
 

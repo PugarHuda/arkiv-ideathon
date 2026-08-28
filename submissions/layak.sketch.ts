@@ -45,14 +45,14 @@ export async function recordExamination(w: Wal, x: {
   const creates = [
     // the statutory record — passes AND failures — must outlive the certificate
     { payload: new Uint8Array(0), contentType: CT, expiresIn: EXAM_RECORD_SEC,
-      attributes: attrs({ app: APP, kind: "exam", assetId: x.assetId, examRecordId: x.examRecordId, bodyId: x.bodyId,
+      attributes: attrs({ project: APP, type: "exam", assetId: x.assetId, examRecordId: x.examRecordId, bodyId: x.bodyId,
                           examTs, outcomeCode: x.outcomeCode, defectCount: x.defectCount,
                           testRatioBps: x.testRatioBps, regimeCode: x.regimeCode, reportHash: x.reportHash }) },
   ];
   if (x.outcomeCode !== 2) {
     // the operative certificate — its LIFETIME IS the validity. Never updated. Never extended by product rule.
     creates.push({ payload: new Uint8Array(0), contentType: CT, expiresIn: even(validity),
-      attributes: attrs({ app: APP, kind: "cert", assetId: x.assetId, certType: x.certType, siteId: x.siteId,
+      attributes: attrs({ project: APP, type: "cert", assetId: x.assetId, certType: x.certType, siteId: x.siteId,
                           bodyId: x.bodyId, examRecordId: x.examRecordId, issuedTs: examTs,
                           expiresAtTs: examTs + validity, outcomeCode: x.outcomeCode }) });
   }
@@ -63,13 +63,13 @@ export async function recordExamination(w: Wal, x: {
 // ---------- 2. the gate check — two trivial predicates, both must hold ----------
 export async function gateCheck(p: Pub, assetId: string, certType: string) {
   const certs = await p.select({ key: true, creator: true, attributes: true, createdAtBlock: true })
-    .where(eq("app", APP), eq("kind", "cert"), eq("assetId", assetId), eq("certType", certType))
+    .where(eq("project", APP), eq("type", "cert"), eq("assetId", assetId), eq("certType", certType))
     .limit(5).fetch();                                    // an expired cert CANNOT be in this set
   const prohibitions = await p.select({ key: true })
-    .where(eq("app", APP), eq("kind", "prohibition"), eq("assetId", assetId))
+    .where(eq("project", APP), eq("type", "prohibition"), eq("assetId", assetId))
     .limit(5).count();                                    // a lifted prohibition CANNOT be in this count
   const assetLive = await p.select({ key: true })
-    .where(eq("app", APP), eq("kind", "asset"), eq("assetId", assetId))
+    .where(eq("project", APP), eq("type", "asset"), eq("assetId", assetId))
     .limit(1).count();
   if (certs.entities.length === 0) return { code: "RED_NO_CERT" as const };
   if (prohibitions > 0)            return { code: "RED_PROHIBITION" as const };
@@ -81,14 +81,14 @@ export async function gateCheck(p: Pub, assetId: string, certType: string) {
 export async function logGateCheck(w: Wal, assetId: string, siteId: string, resultCode: 0 | 1 | 2 | 3, cacheAgeSec = 0) {
   return w.createEntity({
     payload: new Uint8Array(0), contentType: CT, expiresIn: GATE_CHECK_SEC,
-    attributes: attrs({ app: APP, kind: "gate", assetId, siteId, checkedTs: now(), resultCode, cacheAgeSec }),
+    attributes: attrs({ project: APP, type: "gate", assetId, siteId, checkedTs: now(), resultCode, cacheAgeSec }),
   });
 }
 
 // ---------- 3. site compliance — the gap between two HONEST counts ----------
 export async function complianceGap(p: Pub, siteId: string, certType: string) {
-  const assets = await countAll(p, [eq("app", APP), eq("kind", "asset"), eq("siteId", siteId)]);
-  const certs  = await countAll(p, [eq("app", APP), eq("kind", "cert"),  eq("siteId", siteId), eq("certType", certType)]);
+  const assets = await countAll(p, [eq("project", APP), eq("type", "asset"), eq("siteId", siteId)]);
+  const certs  = await countAll(p, [eq("project", APP), eq("type", "cert"),  eq("siteId", siteId), eq("certType", certType)]);
   return { assets, certs, gap: assets - certs };          // the gap is the risk number
 }
 
@@ -97,7 +97,7 @@ export async function complianceGap(p: Pub, siteId: string, certType: string) {
 export async function expiringWithin(p: Pub, siteId: string, seconds: number) {
   const t = now();
   const res = await p.select({ key: true, attributes: true })
-    .where(eq("app", APP), eq("kind", "cert"), eq("siteId", siteId), gte("expiresAtTs", t), lt("expiresAtTs", t + seconds))
+    .where(eq("project", APP), eq("type", "cert"), eq("siteId", siteId), gte("expiresAtTs", t), lt("expiresAtTs", t + seconds))
     .limit(PAGE).fetch();
   return res.entities;
 }
@@ -105,12 +105,12 @@ export async function expiringWithin(p: Pub, siteId: string, seconds: number) {
 // ---------- 5. extension anomaly — Q8: "never extended" as a CHECKABLE statement ----------
 export async function extensionAnomalies(p: Pub, assetId: string) {
   const exams = await p.select({ key: true, attributes: true })
-    .where(eq("app", APP), eq("kind", "exam"), eq("assetId", assetId)).limit(50).fetch();
+    .where(eq("project", APP), eq("type", "exam"), eq("assetId", assetId)).limit(50).fetch();
   const out: string[] = [];
   for (const e of exams.entities) {
     const bound = Number(attr(e, "examTs")) + REGIME_SECONDS[Number(attr(e, "regimeCode"))];
     const over = await p.select({ key: true })
-      .where(eq("app", APP), eq("kind", "cert"), eq("examRecordId", String(attr(e, "examRecordId"))), gt("expiresAtTs", bound))
+      .where(eq("project", APP), eq("type", "cert"), eq("examRecordId", String(attr(e, "examRecordId"))), gt("expiresAtTs", bound))
       .limit(1).count();
     if (over > 0) out.push(String(attr(e, "examRecordId")));
   }
@@ -129,7 +129,7 @@ export function looksBackdated(cert: HasAttrs & { readonly createdAtBlock: bigin
 export async function escalate(w: Wal, defectId: string, assetId: string, severityTier: number) {
   return w.createEntity({
     payload: new Uint8Array(0), contentType: CT, expiresIn: ONE_YEAR,
-    attributes: attrs({ app: APP, kind: "escalation", defectId, assetId, severityTier, escalatedTs: now() }),
+    attributes: attrs({ project: APP, type: "escalation", defectId, assetId, severityTier, escalatedTs: now() }),
   });
 }
 
@@ -151,6 +151,6 @@ export async function renewAsset(w: Wal, assetKey: Hex, examRecordKeys: Hex[]) {
 // documented; treated as the upgrade path for investigations, not as a current guarantee.
 export async function registerAtBlock(p: Pub, assetId: string, block: bigint) {
   return (await p.select({ key: true, creator: true, attributes: true })
-    .where(eq("app", APP), eq("kind", "cert"), eq("assetId", assetId))
+    .where(eq("project", APP), eq("type", "cert"), eq("assetId", assetId))
     .validAtBlock(block).limit(PAGE).fetch()).entities;
 }

@@ -1,3 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Arkiv Ideathon, Other lane. Statutory crane inspection certificates as Arkiv entities whose lifetime is the validity period — an expired certificate is a row that no longer exists to be returned.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏷️</text></svg>">
+<link rel="canonical" href="https://pugarhuda.github.io/arkiv-ideathon/submissions/layak.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Arkiv Ideathon — PugarHuda">
+<meta property="og:title" content="LAYAK — safety certification that cannot be out of date">
+<meta property="og:description" content="Arkiv Ideathon, Other lane. Statutory crane inspection certificates as Arkiv entities whose lifetime is the validity period — an expired certificate is a row that no longer exists to be returned.">
+<meta property="og:url" content="https://pugarhuda.github.io/arkiv-ideathon/submissions/layak.html">
+<meta property="og:image" content="https://pugarhuda.github.io/arkiv-ideathon/submissions/og-layak.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="LAYAK — safety certification that cannot be out of date">
+<meta name="twitter:description" content="Arkiv Ideathon, Other lane. Statutory crane inspection certificates as Arkiv entities whose lifetime is the validity period — an expired certificate is a row that no longer exists to be returned.">
+<meta name="twitter:image" content="https://pugarhuda.github.io/arkiv-ideathon/submissions/og-layak.png">
 <title>Layak Gate Check</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Roboto+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
 <style>
@@ -118,7 +139,8 @@
 
   footer { color: var(--muted); font-size: 0.88rem; }
 </style>
-
+</head>
+<body>
 <div class="wrap">
 
   <header class="col">
@@ -340,7 +362,7 @@
         <tbody>
           <tr>
             <td><b>Gate check</b></td>
-            <td><code>eq(assetId, A) &and; eq(certType, "SLO-angkat")</code> must return &ge;1<br><code>eq(kind,"prohibition") &and; eq(assetId, A)</code> must return 0</td>
+            <td><code>eq(assetId, A) &and; eq(certType, "SLO-angkat")</code> must return &ge;1<br><code>eq(type,"prohibition") &and; eq(assetId, A)</code> must return 0</td>
             <td>Green needs both. An out-of-date certificate cannot be in the first set; a lifted prohibition cannot be in the second. No date comparison exists to get wrong.</td>
           </tr>
           <tr>
@@ -355,7 +377,7 @@
           </tr>
           <tr>
             <td><b>Statutory pull</b></td>
-            <td><code>eq(kind,"exam") &and; eq(assetId, A) &and; gte(examTs, T0)</code></td>
+            <td><code>eq(type,"exam") &and; eq(assetId, A) &and; gte(examTs, T0)</code></td>
             <td>Every examination this machine ever had, passes and failures alike. The reason <code>ExamRecord</code> is a separate entity.</td>
           </tr>
           <tr>
@@ -380,7 +402,7 @@
           </tr>
           <tr>
             <td><b>Was anybody checking?</b></td>
-            <td><code>count(eq(kind,"gate") &and; eq(siteId, S) &and; gte(checkedTs, T0))</code></td>
+            <td><code>count(eq(type,"gate") &and; eq(siteId, S) &and; gte(checkedTs, T0))</code></td>
             <td>A site with hundreds of movements and no gate checks is not a clean record; it is a site that never looked. <b>The absence of this number is the finding.</b></td>
           </tr>
         </tbody>
@@ -411,7 +433,7 @@
           <tr><td>Counts &middot; cursors</td><td>Site compliance as the gap between two counts; cursor pagination on the statutory pull.</td></tr>
           <tr><td>Polled events</td><td>Costs this design nothing: the gate check is a pull when someone stands at the gate, and the renewal queue is a scheduled morning read.</td></tr>
           <tr><td>Encrypted payloads</td><td>Defect diagnoses encrypted to owner, body and insurer; <code>severityTier</code> left public. The split is what keeps silence expensive.</td></tr>
-          <tr><td>Project namespace</td><td><code>app: "layak"</code> on every entity, first in every predicate. In a fail-closed system that term is load-bearing &mdash; it stops another project&rsquo;s <code>"cert"</code> entity turning a red gate green.</td></tr>
+          <tr><td>Project namespace</td><td><code>project: "layak"</code> on every entity, first in every predicate. In a fail-closed system that term is load-bearing &mdash; it stops another project&rsquo;s <code>"cert"</code> entity turning a red gate green.</td></tr>
         </tbody>
       </table>
     </div>
@@ -515,14 +537,14 @@ export async function recordExamination(w: Wal, x: {
   const creates = [
     // the statutory record — passes AND failures — must outlive the certificate
     { payload: new Uint8Array(0), contentType: CT, expiresIn: EXAM_RECORD_SEC,
-      attributes: attrs({ app: APP, kind: &quot;exam&quot;, assetId: x.assetId, examRecordId: x.examRecordId, bodyId: x.bodyId,
+      attributes: attrs({ project: APP, kind: &quot;exam&quot;, assetId: x.assetId, examRecordId: x.examRecordId, bodyId: x.bodyId,
                           examTs, outcomeCode: x.outcomeCode, defectCount: x.defectCount,
                           testRatioBps: x.testRatioBps, regimeCode: x.regimeCode, reportHash: x.reportHash }) },
   ];
   if (x.outcomeCode !== 2) {
     // the operative certificate — its LIFETIME IS the validity. Never updated. Never extended by product rule.
     creates.push({ payload: new Uint8Array(0), contentType: CT, expiresIn: even(validity),
-      attributes: attrs({ app: APP, kind: &quot;cert&quot;, assetId: x.assetId, certType: x.certType, siteId: x.siteId,
+      attributes: attrs({ project: APP, kind: &quot;cert&quot;, assetId: x.assetId, certType: x.certType, siteId: x.siteId,
                           bodyId: x.bodyId, examRecordId: x.examRecordId, issuedTs: examTs,
                           expiresAtTs: examTs + validity, outcomeCode: x.outcomeCode }) });
   }
@@ -551,7 +573,7 @@ export async function gateCheck(p: Pub, assetId: string, certType: string) {
 export async function logGateCheck(w: Wal, assetId: string, siteId: string, resultCode: 0 | 1 | 2 | 3, cacheAgeSec = 0) {
   return w.createEntity({
     payload: new Uint8Array(0), contentType: CT, expiresIn: GATE_CHECK_SEC,
-    attributes: attrs({ app: APP, kind: &quot;gate&quot;, assetId, siteId, checkedTs: now(), resultCode, cacheAgeSec }),
+    attributes: attrs({ project: APP, kind: &quot;gate&quot;, assetId, siteId, checkedTs: now(), resultCode, cacheAgeSec }),
   });
 }
 
@@ -599,7 +621,7 @@ export function looksBackdated(cert: HasAttrs &amp; { readonly createdAtBlock: b
 export async function escalate(w: Wal, defectId: string, assetId: string, severityTier: number) {
   return w.createEntity({
     payload: new Uint8Array(0), contentType: CT, expiresIn: ONE_YEAR,
-    attributes: attrs({ app: APP, kind: &quot;escalation&quot;, defectId, assetId, severityTier, escalatedTs: now() }),
+    attributes: attrs({ project: APP, kind: &quot;escalation&quot;, defectId, assetId, severityTier, escalatedTs: now() }),
   });
 }
 
@@ -1044,3 +1066,5 @@ export class MemQuery {
   </footer>
 
 </div>
+</body>
+</html>

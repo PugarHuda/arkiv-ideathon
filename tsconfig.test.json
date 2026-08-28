@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "es2022", "module": "es2022", "moduleResolution": "bundler",
+    "strict": true, "skipLibCheck": true, "esModuleInterop": true,
+    "lib": ["es2022", "dom"], "types": ["node"],
+    "rootDir": "submissions", "outDir": "dist"
+  },
+  "files": [
+    "submissions/selisih.sketch.ts",
+    "submissions/layak.sketch.ts",
+    "submissions/evidence/memarkiv.ts",
+    "submissions/evidence/invariants.test.ts"
+  ]
+}

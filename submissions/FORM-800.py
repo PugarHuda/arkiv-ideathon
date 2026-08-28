@@ -28,7 +28,7 @@ S["Scope — the first slice you'd build"] = (
 "Independent observers do disagree, hardest under stress.")
 
 S["The entities and typed attributes you'd write"] = (
-"Integers only, scale in the key; every entity carries app:selisih; relations via shared keys. "
+"Integers only, scale in the key; every entity carries project:selisih; relations via shared keys. "
 "RiskSnapshot (append-only; lifetime chosen by the witness, floor 72h): market, round, blockNumber, observedTs, priceE8, "
 "healthFactorBps, totalDebtE6, collateralE6, atRiskCount, deviationBps, severityTier 0-4, fundedDays, expiresAtTs "
 "(mirror), sourceHash; corrections are new entities. "
@@ -38,10 +38,10 @@ S["The entities and typed attributes you'd write"] = (
 "originTxHash, because only the owner can extend. Resolution (arbiter-signed): outcomeCode, vindicatedWitness.")
 
 S["The queries you'd rely on"] = (
-"All prefixed eq(app,selisih); strings eq-only; newest-first, no server ORDER BY. "
-"1 Divergence board: eq(kind,snapshot) eq(market,M) eq(round,R) — one row per witness; median/spread client-side. "
+"All prefixed eq(project,selisih); strings eq-only; newest-first, no server ORDER BY. "
+"1 Divergence board: eq(type,snapshot) eq(market,M) eq(round,R) — one row per witness; median/spread client-side. "
 "2 Who is missing: count of (1) vs count of live registrations for M. "
-"3 Track record, two numbers: createdBy(W) + gte(severityTier,3) [broke from peers] and eq(kind,resolution) "
+"3 Track record, two numbers: createdBy(W) + gte(severityTier,3) [broke from peers] and eq(type,resolution) "
 "eq(vindicatedWitness,W) [broke and was right] — one number alone punishes the best witness. "
 "4 Conviction: gte(fundedDays,30) — readings their authors paid to keep. "
 "5 Danger scan: lt(healthFactorBps,10500) gte(round,N). "
@@ -76,7 +76,7 @@ S["What deliberately stays off Arkiv"] = (
 "disagreement, not a cartel — attributable readings, not correct ones.")
 
 S["Supporting links (optional)"] = (
-"Write-up, diagrams, charts, code: https://claude.ai/code/artifact/c4bf64e1-1f53-4a42-b6a3-de9e0aa91ee2 — "
+"Write-up, diagrams, charts, code: https://pugarhuda.github.io/arkiv-ideathon/submissions/selisih.html — "
 "Evidence, not description: (1) kill test run twice on real mainnet archive state — Chainlink vs Uniswap up to 423 bps "
 "apart at block 20,459,000; Chainlink's own 31 nodes (decoded from NewTransmission) spread 868 bps at block 20,458,998 "
 "while the feed said $2,233.80; six nodes >200 bps off; median node spread 49.5 bps under stress vs 3.3 calm. Day one, "
@@ -109,25 +109,25 @@ L["Scope — the first slice you'd build"] = (
 "public or their competitor's. A shrug kills it; one inspector undercut by rubber-stampers makes it.")
 
 L["The entities and typed attributes you'd write"] = (
-"Integers only; every entity carries app:layak; relations via shared keys. "
+"Integers only; every entity carries project:layak; relations via shared keys. "
 "Certificate (lifetime = validity, 1y or 2y; never updated, never extended by rule): assetId, certType, siteId, inspector, "
 "bodyId, examRecordId, issuedTs, expiresAtTs (mirror), outcomeCode. ExamRecord (5y, extended for the life of the "
 "machine): examTs, outcomeCode incl. fail, defectCount, testRatioBps (12500 = 1.25x), reportHash, regimeCode. One exam "
 "writes both, opposite lifetimes; a failed exam writes the record and NO certificate — absence is the fail state. Asset (2y; $owner moves on sale). Registration (inspector licence; renewed only by the body). "
 "Prohibition (until lifted). DefectReport (30d; public severityTier, encrypted payload) + "
-"Escalation (1y). GateCheck (90d): every scan, resultCode 0-3 incl. offline.")
+"Escalation (1y). GateCheck (90d): every scan, resultCode 0-3.")
 
 L["The queries you'd rely on"] = (
-"All prefixed eq(app,layak); strings eq-only; newest-first; exact slugs. "
-"1 Gate check: eq(kind,cert) eq(assetId,A) eq(certType,T) returns >=1 AND eq(kind,prohibition) eq(assetId,A) returns 0 — "
+"All prefixed eq(project,layak); strings eq-only; newest-first; exact slugs. "
+"1 Gate check: eq(type,cert) eq(assetId,A) eq(certType,T) returns >=1 AND eq(type,prohibition) eq(assetId,A) returns 0 — "
 "an expired cert cannot be in the set; no date comparison to get wrong. "
 "2 Site compliance: count(assets on site) vs count(live certs) — the gap is the risk number. "
 "3 Renewal queue: gte(expiresAtTs,now) lt(expiresAtTs,now+7d). "
-"4 Statutory pull: eq(kind,exam) eq(assetId,A) — passes and failures. "
-"5 Inspector's book: eq(kind,exam) eq(inspector,I) gte(examTs,T0). "
-"6 Issuer licensed: eq(kind,reg) eq(inspector,I). "
+"4 Statutory pull: eq(type,exam) eq(assetId,A) — passes and failures. "
+"5 Inspector's book: eq(type,exam) eq(inspector,I) gte(examTs,T0). "
+"6 Issuer licensed: eq(type,reg) eq(inspector,I). "
 "7 Extension anomaly: gt(expiresAtTs, examTs+regimeSeconds) — 'never extended' as a checkable statement. "
-"8 Was anybody checking: count(eq(kind,gate) eq(siteId,S) gte(checkedTs,T0)).")
+"8 Was anybody checking: count(eq(type,gate) eq(siteId,S) gte(checkedTs,T0)).")
 
 L["How expiry / extension / verifiable ownership work as product features"] = (
 "Expiry is the safety property: validity is the storage contract, not data someone must remember to filter — the "
@@ -158,7 +158,7 @@ L["What deliberately stays off Arkiv"] = (
 "and it is blind to machines never registered.")
 
 L["Supporting links (optional)"] = (
-"Write-up, diagrams, code: https://claude.ai/code/artifact/60440808-a338-45c2-9c30-a390939e2226 — Evidence, not "
+"Write-up, diagrams, code: https://pugarhuda.github.io/arkiv-ideathon/submissions/layak.html — Evidence, not "
 "description: (1) the TS schema type-checks with tsc --strict against @arkiv-network/sdk@0.7.0 from npm, which corrected "
 "four things and surfaced createdAtBlock, createdBy(), validAtBlock() and the ArkivEntityExpired event. (2) Nine "
 "invariants execute the sketch against a cited spec of the documented semantics — expired cert never returned, failed "

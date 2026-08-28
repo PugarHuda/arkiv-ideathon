@@ -1,3 +1,3 @@
 { "compilerOptions": { "target": "es2022", "module": "esnext", "moduleResolution": "bundler",
     "strict": true, "noEmit": true, "skipLibCheck": true, "esModuleInterop": true, "lib": ["es2022","dom"] },
-  "files": ["selisih.sketch.ts", "layak.sketch.ts"] }
+  "files": ["../selisih.sketch.ts", "../layak.sketch.ts"] }

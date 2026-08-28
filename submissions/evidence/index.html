@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evidence — SELISIH & LAYAK</title>
+<meta name="description" content="Everything in this directory was run and can be re-run: SDK type-checks, executable invariants, and two kill tests against real Ethereum mainnet state.">
+<style>
+  :root{--bg:#F4F5F7;--fg:#14181F;--muted:#5B6472;--rule:#CFD4DB;--accent:#AD3A0A;--surface:#fff}
+  @media (prefers-color-scheme:dark){:root{--bg:#0F1219;--fg:#E3E7ED;--muted:#8C95A3;--rule:#262D38;--accent:#FF7A45;--surface:#161A22}}
+  *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,sans-serif;padding:2.5rem 1.25rem 5rem}
+  .wrap{max-width:60rem;margin:0 auto}h1{font-size:1.5rem;margin:0 0 .5rem}p{color:var(--muted);margin:0 0 1.5rem}
+  table{border-collapse:collapse;width:100%;background:var(--surface);border:1px solid var(--rule);font-size:.92rem}
+  th,td{text-align:left;padding:.6rem .8rem;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font:600 .68rem/1 ui-monospace,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  a{color:var(--accent)}code{font-family:ui-monospace,monospace;font-size:.85em}
+</style>
+</head>
+<body><div class="wrap">
+<h1>Evidence</h1>
+<p>Nothing here is deployed — the event forbids it and there is no open Arkiv network during August 2026. Two scripts read public Ethereum mainnet through an archive RPC; the rest runs offline. Full descriptions and re-run instructions: <a href="README.md">README.md</a>.</p>
+<table>
+<thead><tr><th>File</th><th>What it is</th><th>Key result</th></tr></thead>
+<tbody>
+<tr><td><a href="memarkiv.ts"><code>memarkiv.ts</code></a></td><td>Executable specification of the 12 Arkiv rules both designs depend on, each cited to the SDK source or fundamentals. Not Arkiv — the referee for the designs' logic.</td><td>—</td></tr>
+<tr><td><a href="invariants.test.ts"><code>invariants.test.ts</code></a></td><td>17 invariants (9 LAYAK, 8 SELISIH) that run the unchanged sketch code against MemArkiv.</td><td><a href="invariants.result.txt">17 pass, 0 fail</a></td></tr>
+<tr><td><a href="tsconfig.sketch.json"><code>tsconfig.sketch.json</code></a></td><td>Options under which the sketches type-check with <code>--strict</code> against <code>@arkiv-network/sdk@0.7.0</code>.</td><td>exit 0</td></tr>
+<tr><td><a href="killtest.py"><code>killtest.py</code></a></td><td>Kill test 1 — Chainlink vs Uniswap ETH/USD at the same block, 31 blocks across the 5 Aug 2024 crash and 31 calm.</td><td><a href="killtest.txt">max 423.1 bps at block 20,459,000</a> · <a href="killtest.json">json</a></td></tr>
+<tr><td><a href="chainlink_nodes.py"><code>chainlink_nodes.py</code></a></td><td>Kill test 2 — every node's observation decoded from <code>NewTransmission</code>, 161 rounds under stress and 18 calm.</td><td><a href="chainlink_nodes.json">median 49.5 vs 3.3 bps · max 868.5</a></td></tr>
+<tr><td><a href="chainlink_round_20458998.json"><code>chainlink_round_20458998.json</code></a></td><td>The widest round: 31 observations from $2,141.32 to $2,335.32 while the feed published $2,233.80; attributed by node index.</td><td>6 of 31 nodes &gt;200 bps off</td></tr>
+</tbody>
+</table>
+</div></body>
+</html>

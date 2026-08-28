@@ -32,7 +32,7 @@ Then the demo that proves it: create a certificate with a **two-minute lifetime*
 **How to kill it without deploying anything:** the riskiest assumption is that an inspection body will publish to a register it cannot edit. Show three PJK3 inspectors the two-minute demo and the "inspector's whole book" query, and ask: *would you rather your book was public, or your competitor's was?* A shrug kills it. An inspector who has been undercut by someone signing off machines they never climbed makes it — and that person exists in every inspection market.
 
 ## The entities and typed attributes you'd write
-All numerics are integers. Every entity carries `app: "layak"` — in a fail-closed system that term is load-bearing: it stops another project's `"cert"` entity turning a red gate green. Relationships are shared attribute keys (`assetId`, `examRecordId`, `inspector`, `defectId`).
+All numerics are integers. Every entity carries `project: "layak"` — in a fail-closed system that term is load-bearing: it stops another project's `"cert"` entity turning a red gate green. Relationships are shared attribute keys (`assetId`, `examRecordId`, `inspector`, `defectId`).
 
 **Certificate** (lifetime = validity: `expiresIn` 63072000 post-commissioning, 31536000 periodic; never updated, never extended by product rule): `assetId`, `certType` (string slug), `siteId`, `inspector` (mirrors `$creator`), `bodyId`, `examRecordId`, `issuedTs`, `expiresAtTs` (numeric mirror), `outcomeCode`.
 
@@ -51,16 +51,16 @@ All numerics are integers. Every entity carries `app: "layak"` — in a fail-clo
 **What this schema stores differently from "an on-chain certificate registry":** validity goes to `expiresIn`, never to an attribute, so the gate check has no date comparison; one exam writes two entities with opposite lifetimes; a failed exam writes the record and no certificate; extension is withheld from certificates and its misuse is detectable by anyone; revocation is a separate `Prohibition` entity because nothing executes; every scan writes a `GateCheck`; and Permenaker 8/2020's cadence *is* the `expiresIn` table. The obvious alternatives were this idea's own first draft.
 
 ## The queries you'd rely on
-All prefixed `eq(app,"layak")`. Strings support `eq()` only; no wildcard search exists, so every string is an enumerated slug.
+All prefixed `eq(project,"layak")`. Strings support `eq()` only; no wildcard search exists, so every string is an enumerated slug.
 
-1. **Gate check:** `eq(kind,"cert") ∧ eq(assetId,A) ∧ eq(certType,T)` must return ≥1, and `eq(kind,"prohibition") ∧ eq(assetId,A)` must return 0. Green needs both. An out-of-date certificate *cannot* be in the first set; no date comparison exists to get wrong.
-2. **Site compliance as two counts:** `count(eq(kind,"asset") ∧ eq(siteId,S))` vs `count(eq(kind,"cert") ∧ eq(siteId,S) ∧ eq(certType,T))`. The gap is the risk number, and a site that logs nothing scores worse, not better.
-3. **Renewal queue:** `eq(kind,"cert") ∧ eq(siteId,S) ∧ gte(expiresAtTs,now) ∧ lt(expiresAtTs,now+604800)` — why `expiresAtTs` is mirrored: system expiry governs what is returned but cannot be range-queried.
-4. **Statutory pull:** `eq(kind,"exam") ∧ eq(assetId,A) ∧ gte(examTs,T0)` — every examination, passes and failures, cursor-paginated. The reason `ExamRecord` is a separate entity.
-5. **Inspector's whole book:** `eq(kind,"exam") ∧ eq(inspector,I) ∧ gte(examTs,T0)` — held by no employer, deletable by no employer.
-6. **Was the issuer registered:** `eq(kind,"reg") ∧ eq(inspector,I) ∧ eq(scheme,"PJK3")` — a live certificate from an unregistered inspector is the highest-value anomaly in the system.
-7. **Extension anomaly:** `eq(kind,"cert") ∧ gt(expiresAtTs, examTs + regimeSeconds)` — makes "never extended" a checkable statement rather than a promise; anyone can run it over the whole register.
-8. **Was anybody checking:** `count(eq(kind,"gate") ∧ eq(siteId,S) ∧ gte(checkedTs,T0))`, and with `gte(resultCode,1)`. A site with hundreds of movements and no gate checks never looked. The absence of this number is the finding.
+1. **Gate check:** `eq(type,"cert") ∧ eq(assetId,A) ∧ eq(certType,T)` must return ≥1, and `eq(type,"prohibition") ∧ eq(assetId,A)` must return 0. Green needs both. An out-of-date certificate *cannot* be in the first set; no date comparison exists to get wrong.
+2. **Site compliance as two counts:** `count(eq(type,"asset") ∧ eq(siteId,S))` vs `count(eq(type,"cert") ∧ eq(siteId,S) ∧ eq(certType,T))`. The gap is the risk number, and a site that logs nothing scores worse, not better.
+3. **Renewal queue:** `eq(type,"cert") ∧ eq(siteId,S) ∧ gte(expiresAtTs,now) ∧ lt(expiresAtTs,now+604800)` — why `expiresAtTs` is mirrored: system expiry governs what is returned but cannot be range-queried.
+4. **Statutory pull:** `eq(type,"exam") ∧ eq(assetId,A) ∧ gte(examTs,T0)` — every examination, passes and failures, cursor-paginated. The reason `ExamRecord` is a separate entity.
+5. **Inspector's whole book:** `eq(type,"exam") ∧ eq(inspector,I) ∧ gte(examTs,T0)` — held by no employer, deletable by no employer.
+6. **Was the issuer registered:** `eq(type,"reg") ∧ eq(inspector,I) ∧ eq(scheme,"PJK3")` — a live certificate from an unregistered inspector is the highest-value anomaly in the system.
+7. **Extension anomaly:** `eq(type,"cert") ∧ gt(expiresAtTs, examTs + regimeSeconds)` — makes "never extended" a checkable statement rather than a promise; anyone can run it over the whole register.
+8. **Was anybody checking:** `count(eq(type,"gate") ∧ eq(siteId,S) ∧ gte(checkedTs,T0))`, and with `gte(resultCode,1)`. A site with hundreds of movements and no gate checks never looked. The absence of this number is the finding.
 
 ## How expiry / extension / verifiable ownership work as product features
 **Expiry is the safety property.** Everywhere else, validity is data you must remember to check; here it is the storage contract. The certificate's lifetime and its meaning are the same fact, which removes the stale-row bug class by construction rather than by discipline.
@@ -82,6 +82,6 @@ On the fourth pillar, precisely: block production stays centralised through Nove
 **Honest limits:** LAYAK proves who signed and when, not that the examination happened. And the easiest way to defeat it is never to register the machine at all — it is structurally blind to equipment it does not know exists, and that gap is closed by inspectors refusing to work off-register, not by a database feature.
 
 ## Supporting links (optional)
-Full write-up with diagrams and the entity-model sketch: https://claude.ai/code/artifact/60440808-a338-45c2-9c30-a390939e2226
+Full write-up with diagrams and the entity-model sketch: https://pugarhuda.github.io/arkiv-ideathon/submissions/layak.html
 
 Three things in there are evidence rather than description. (1) The TypeScript sketch **type-checks with `tsc --strict` against `@arkiv-network/sdk@0.7.0` from npm** — which corrected four things (client-based API, `Attribute[]` shape, required `contentType`, page-bounded `.count()`) and surfaced `createdAtBlock`, `.createdBy()`, `validAtBlock()` and the `ArkivEntityExpired` event. (2) The sketch is then **executed** against an executable spec of the documented semantics: nine invariants (expired cert never returned, failed exam → record and no cert, record outlives cert, non-owner cannot extend and an owner who does is caught, orphan cert → amber, prohibition without triggers, resale keeps `$creator`, 350 ≠ 200, odd `expiresIn` rejected) — all pass. (3) Read against `0.8.0-dev`: `$expiresAt` becomes queryable (the mirror disappears), `dec`/`addr`/`key` types replace scaling conventions, `atDate()` makes a certificate's deadline first-class, and `$createdAt` stays result-only — so the protocol feedback stands. Nothing is deployed.

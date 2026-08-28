@@ -41,7 +41,7 @@ async function countAll(p: Pub, preds: Predicate[]) {
 export async function commit(w: Wal, market: string, round: number, digest: string) {
   return w.createEntity({
     payload: new Uint8Array(0), contentType: CT, expiresIn: COMMIT_SEC,
-    attributes: attrs({ app: APP, kind: "commit", market, round, digest, committedTs: now() }),
+    attributes: attrs({ project: APP, type: "commit", market, round, digest, committedTs: now() }),
   });
 }
 
@@ -59,7 +59,7 @@ export async function reveal(w: Wal, s: {
   // so `fundedDays` is checkable against the event, not merely self-reported.
   return w.createEntity({
     payload: enc(topK), contentType: CT, expiresIn,
-    attributes: attrs({ app: APP, kind: "snapshot", ...rest, fundedDays, expiresAtTs: now() + expiresIn,
+    attributes: attrs({ project: APP, type: "snapshot", ...rest, fundedDays, expiresAtTs: now() + expiresIn,
                         ...(supersedesRound !== undefined ? { supersedesRound } : {}) }),
   });
 }
@@ -67,21 +67,21 @@ export async function reveal(w: Wal, s: {
 // ---------- 2. the divergence board — Q1 + Q2 ----------
 export async function divergence(p: Pub, market: string, round: number) {
   const res = await p.select({ key: true, creator: true, attributes: true, expiresAtBlock: true, createdAtBlock: true })
-    .where(eq("app", APP), eq("kind", "snapshot"), eq("market", market), eq("round", round),
+    .where(eq("project", APP), eq("type", "snapshot"), eq("market", market), eq("round", round),
            not("supersedesRound"))                        // `not(key)` = attribute ABSENT → originals only
     .limit(PAGE).fetch();
   const rows = res.entities;                               // bounded by roster size → one page holds it
   const hf = rows.map(r => Number(attr(r, "healthFactorBps"))).sort((a, b) => a - b);
   const median = hf[Math.floor(hf.length / 2)];            // computed client-side and NEVER written
   const registered = await p.select({ key: true })
-    .where(eq("app", APP), eq("kind", "witness"), eq("market", market)).limit(PAGE).count();
+    .where(eq("project", APP), eq("type", "witness"), eq("market", market)).limit(PAGE).count();
   return { rows, median, missing: registered - rows.length };
 }
 
 // ---------- 3. reputation as two numbers — Q3 (native createdBy, not a mirrored attribute) ----------
 export async function trackRecord(p: Pub, witness: Hex) {
-  const broke = await countAllBy(p, witness, [eq("app", APP), eq("kind", "snapshot"), gte("severityTier", 3)]);
-  const vindicated = await countAll(p, [eq("app", APP), eq("kind", "resolution"), eq("vindicatedWitness", witness)]);
+  const broke = await countAllBy(p, witness, [eq("project", APP), eq("type", "snapshot"), gte("severityTier", 3)]);
+  const vindicated = await countAll(p, [eq("project", APP), eq("type", "resolution"), eq("vindicatedWitness", witness)]);
   return { broke, vindicated };                            // one number alone punishes the best witness
 }
 async function countAllBy(p: Pub, creator: Hex, preds: Predicate[]) {
@@ -94,7 +94,7 @@ async function countAllBy(p: Pub, creator: Hex, preds: Predicate[]) {
 // ---------- 4. pin queue — Q5: readings that lapse before their dispute resolves ----------
 export async function pinQueue(p: Pub, market: string, roundFrom: number, roundTo: number, deadlineTs: number) {
   const res = await p.select({ key: true, creator: true, attributes: true, payload: true })
-    .where(eq("app", APP), eq("kind", "snapshot"), eq("market", market),
+    .where(eq("project", APP), eq("type", "snapshot"), eq("market", market),
            gte("round", roundFrom), lte("round", roundTo), lt("expiresAtTs", deadlineTs))
     .limit(PAGE).fetch();
   return res.entities;
@@ -105,7 +105,7 @@ export async function pin(w: Wal, original: HasAttrs & { readonly creator: Hex; 
                           originTxHash: Hex, expiresIn = PIN_DEFAULT_SEC) {
   return w.createEntity({
     payload: original.payload, contentType: CT, expiresIn: even(expiresIn),
-    attributes: attrs({ app: APP, kind: "pin", market: String(attr(original, "market")),
+    attributes: attrs({ project: APP, type: "pin", market: String(attr(original, "market")),
                         round: Number(attr(original, "round")), pinnedWitness: original.creator,
                         originTxHash, pinnedTs: now(), expiresAtTs: now() + expiresIn }),
   });
@@ -121,7 +121,7 @@ export async function rosterEpoch(w: Wal, market: string, epoch: number, roundFr
   return w.mutateEntities({                                // ≤1000 ops per tx; chunk beyond that
     creates: [{
       payload: enc(witnesses), contentType: CT, expiresIn: ROSTER_EPOCH_SEC,
-      attributes: attrs({ app: APP, kind: "roster", market, epoch, roundFrom, roundTo, witnessCount: witnesses.length }),
+      attributes: attrs({ project: APP, type: "roster", market, epoch, roundFrom, roundTo, witnessCount: witnesses.length }),
     }],
   });
 }
@@ -132,7 +132,7 @@ export async function rosterEpoch(w: Wal, market: string, epoch: number, roundFr
 // so the design keeps RosterEpoch and treats this as the upgrade path — not as a promise.
 export async function rosterAtBlock(p: Pub, market: string, block: bigint) {
   const res = await p.select({ key: true, creator: true })
-    .where(eq("app", APP), eq("kind", "witness"), eq("market", market))
+    .where(eq("project", APP), eq("type", "witness"), eq("market", market))
     .validAtBlock(block).limit(PAGE).fetch();
   return res.entities.map(e => e.creator);
 }

@@ -80,14 +80,14 @@ Three consequences make it more than a trick:
 
 All numerics are **integers**; timestamps are unix seconds.
 
-**Every entity carries `app: "layak"`.** Arkiv is one shared, public database — these entities sit beside everyone else's, and `kind: "cert"` is a word many projects will reach for. There is no namespace primitive, so the namespace is an attribute, it is on every entity, and it is the first term of every predicate in §4. Getting this wrong in a fail-closed system is worse than getting it wrong elsewhere: a gate check that matched somebody else's `"cert"` entity would return green for a machine that has none.
+**Every entity carries `project: "layak"`.** Arkiv is one shared, public database — these entities sit beside everyone else's, and `type: "cert"` is a word many projects will reach for. There is no namespace primitive, so the namespace is an attribute, it is on every entity, and it is the first term of every predicate in §4. Getting this wrong in a fail-closed system is worse than getting it wrong elsewhere: a gate check that matched somebody else's `"cert"` entity would return green for a machine that has none.
 
 ### `Certificate` — the operative one. Its lifetime IS the validity.
 
 | Attribute | Type | Notes |
 | :--- | :--- | :--- |
-| `app` | string | `"layak"` — the project namespace, on every entity in the model |
-| `kind` | string | `"cert"` |
+| `project` | string | `"layak"` — the project namespace, on every entity in the model |
+| `type` | string | `"cert"` |
 | `assetId` | string | joins to `Asset` |
 | `certType` | string | `"SLO-angkat"` \| `"SLO-angkut"` \| `"LOLER"` … `eq()` only |
 | `siteId` | string | site at time of examination |
@@ -112,7 +112,7 @@ Only a failed examination writes no certificate at all. Absence is the fail stat
 
 ### `ExamRecord` — the statutory one. It must outlive the certificate.
 
-`kind`, `assetId`, `examRecordId`, `inspector`, `bodyId`, `examTs` (numeric), `outcomeCode` (numeric, including 2 = fail), `defectCount` (numeric), `reportHash` (string), `regimeCode` (numeric), `testRatioBps` (numeric).
+`type`, `assetId`, `examRecordId`, `inspector`, `bodyId`, `examTs` (numeric), `outcomeCode` (numeric, including 2 = fail), `defectCount` (numeric), `reportHash` (string), `regimeCode` (numeric), `testRatioBps` (numeric).
 
 `testRatioBps` is the one place a decimal appears: a proof-load test is performed at some multiple of the safe working load, typically 1.25×. Numeric attributes are integers, so it is stored as basis points — `12500` — and the scale is named in the attribute. Anyone who stores that as `"1.25"` gets a string, and a string cannot answer `gte(testRatioBps, 12500)`, which is exactly the query an insurer asks when it wants every machine proof-tested to standard.
 
@@ -124,19 +124,19 @@ So the same examination writes two entities in one `mutateEntities` batch: the c
 
 ### `Asset` — long-lived, ownership transfers with the machine
 
-`kind`, `assetId` (stable serial hash), `assetClass` (string), `siteId` (string), `manufacturedYear` (numeric), `capacityKg` (numeric), `regimeCode` (numeric — which inspection cadence applies).
+`type`, `assetId` (stable serial hash), `assetClass` (string), `siteId` (string), `manufacturedYear` (numeric), `capacityKg` (numeric), `regimeCode` (numeric — which inspection cadence applies).
 
 **Lifetime: 2 years, extended annually** while the asset is in service. An asset nobody renews is an asset nobody is claiming responsibility for, and it drops off the register — the correct outcome, not a bug. **`$owner` is the operator of record** and moves with `changeOwnership` on sale or long-term hire.
 
 ### `Registration` — the inspector's own licence, alive only while renewed
 
-`kind`, `inspector`, `scheme` (string, e.g. `"PJK3"` / `"LEEA"`), `bodyId` (string), `scopeCode` (numeric), `grantedTs`, `expiresAtTs` (numeric mirror).
+`type`, `inspector`, `scheme` (string, e.g. `"PJK3"` / `"LEEA"`), `bodyId` (string), `scopeCode` (numeric), `grantedTs`, `expiresAtTs` (numeric mirror).
 
 **Lifetime: the registration period, renewed by the issuing body — never by the inspector.** `$creator` is the body, immutably. An inspector cannot write their own registration into existence, because the entity's author is checkable and it is not them.
 
 ### `DefectReport` — append-only, written by anyone on site
 
-`kind`, `assetId`, `siteId`, `severityTier` (numeric 0–4), `reportedTs`, `reporterRole` (string), `photoHash` (string), `statusCode` (numeric).
+`type`, `assetId`, `siteId`, `severityTier` (numeric 0–4), `reportedTs`, `reporterRole` (string), `photoHash` (string), `statusCode` (numeric).
 
 **Lifetime: 30 days.** A near-miss nobody acts on lapses; that is correct, and it keeps honest logging cheap.
 
@@ -144,7 +144,7 @@ Escalation is **a new entity, not an extension** — because only the owner may 
 
 ### `Prohibition` — how revocation works when the database executes nothing
 
-`kind`, `assetId`, `siteId`, `issuedBy`, `reasonCode` (numeric), `issuedTs`, `expiresAtTs` (numeric mirror). **Lifetime: until lifted or re-examined, extended by the issuing inspector.**
+`type`, `assetId`, `siteId`, `issuedBy`, `reasonCode` (numeric), `issuedTs`, `expiresAtTs` (numeric mirror). **Lifetime: until lifted or re-examined, extended by the issuing inspector.**
 
 Arkiv never executes logic, so a tier-4 defect cannot revoke a certificate — there are no triggers, and a design that implied otherwise would be over-promising the model. Real regimes solve this with a separate instrument, a prohibition notice, and so does LAYAK: the gate check asks two questions instead of one. **A live certificate AND no live prohibition.** Both are one-line predicates, the second one written by an inspector who owns it and can lift it, and neither requires the database to do anything but answer.
 
@@ -152,13 +152,13 @@ This is also why the certificate's lifetime can stay simple. Revocation does not
 
 ### `GateCheck` — proof that somebody looked
 
-`app`, `kind`, `assetId`, `siteId`, `checkedBy`, `checkedTs`, `resultCode` (numeric: 0 pass · 1 blocked-no-cert · 2 blocked-prohibition · **3 offline-cached**), `cacheAgeSec` (numeric). **Lifetime: 90 days, extended if an investigation opens.**
+`project`, `type`, `assetId`, `siteId`, `checkedBy`, `checkedTs`, `resultCode` (numeric: 0 pass · 1 blocked-no-cert · 2 blocked-prohibition · **3 offline-cached**), `cacheAgeSec` (numeric). **Lifetime: 90 days, extended if an investigation opens.**
 
 Every scan at the gate writes one tiny entity. This is the feature a site manager will actually ask for, and it inverts who the system protects.
 
 After an accident the question is never only *was the machine certified* — it is **did anybody check**, and today the answer is a supervisor's word against a contractor's. A `GateCheck` is a signed, timestamped, unforgeable answer, written by the person who did the checking, that no employer can delete afterwards. It makes diligence provable rather than assertable, which is what an insurer is actually pricing when it prices a site.
 
-It also makes the blocked cases visible: `resultCode` 1 and 2 are the moments the system did its job, and a site that never records one is either flawless or not scanning. `count(eq(kind,"gate") AND eq(siteId,S) AND gte(checkedTs, T))` against the number of machine-movements is the cheapest honest measure of whether the process is real.
+It also makes the blocked cases visible: `resultCode` 1 and 2 are the moments the system did its job, and a site that never records one is either flawless or not scanning. `count(eq(type,"gate") AND eq(siteId,S) AND gte(checkedTs, T))` against the number of machine-movements is the cheapest honest measure of whether the process is real.
 
 ### Two objections a practitioner raises in the first minute
 
@@ -178,46 +178,46 @@ Be precise about the limit. The published SDK returns `createdAtBlock` as metada
 
 Designed against the real constraints — string attributes support `eq()` only, ranges work on numerics, results are newest-first with no server-side ORDER BY, and no wildcard or prefix matching exists, so every string attribute above is an exact enumerated slug rather than free text.
 
-Every predicate below is prefixed with `eq(app,"layak")`, elided for readability but never in the code. In a fail-closed system that term is load-bearing: it is what stops another project's `"cert"` entity from turning a red gate green.
+Every predicate below is prefixed with `eq(project,"layak")`, elided for readability but never in the code. In a fail-closed system that term is load-bearing: it is what stops another project's `"cert"` entity from turning a red gate green.
 
 **Q1 — The gate check: two predicates, both trivial.**
-`eq(kind,"cert") AND eq(assetId, A) AND eq(certType,"SLO-angkat")` — must return ≥1.
-`eq(kind,"prohibition") AND eq(assetId, A)` — must return 0.
+`eq(type,"cert") AND eq(assetId, A) AND eq(certType,"SLO-angkat")` — must return ≥1.
+`eq(type,"prohibition") AND eq(assetId, A)` — must return 0.
 
 Green needs both. What makes this trustworthy is not the predicates but the fact that an out-of-date certificate **cannot** be in the first result set, and a lifted prohibition cannot be in the second. There is no date comparison anywhere to get wrong. On any conventional stack this same check is one forgotten clause away from waving through an uncertified crane, and the revocation half is a status column somebody has to remember to update.
 
 Then the scan writes a `GateCheck`, so the answer and the asking are both on the record.
 
 **Q2 — Site compliance, as two counts.**
-`count(eq(kind,"asset") AND eq(siteId,S))` versus `count(eq(kind,"cert") AND eq(siteId,S) AND eq(certType,T))`.
+`count(eq(type,"asset") AND eq(siteId,S))` versus `count(eq(type,"cert") AND eq(siteId,S) AND eq(certType,T))`.
 The **gap between the two counts is the risk number** — assets on site with no live certificate. A precision the published SDK forced: `.count()` in 0.7.0 returns one page's length (≤200), not a server-side total. A large site exceeds that, so the sketch fetches keys only (`select({ key: true })`) and sums pages through the cursor — still no attributes or payloads pulled, which was the point.
 
 **Q3 — The renewal queue (and why `expiresAtTs` is mirrored).**
-`eq(kind,"cert") AND eq(siteId,S) AND lt(expiresAtTs, now + 604800) AND gte(expiresAtTs, now)`
+`eq(type,"cert") AND eq(siteId,S) AND lt(expiresAtTs, now + 604800) AND gte(expiresAtTs, now)`
 Everything lapsing within seven days. This is why `expiresAtTs` is duplicated as a numeric attribute: the system expiration governs *whether* an entity is returned, but cannot be used in a range predicate, so a mirror is required to ask "what expires soon". Without it this screen is unbuildable — and this screen is what turns LAYAK from an audit tool into something a scheduler opens every morning.
 
 **Q4 — The statutory pull.**
-`eq(kind,"exam") AND eq(assetId, A) AND gte(examTs, T0)`
+`eq(type,"exam") AND eq(assetId, A) AND gte(examTs, T0)`
 Every examination this machine has ever had, passes and failures alike, cursor-paginated. This is the query that answers a labour inspector's demand, and the reason `ExamRecord` exists as a separate entity from `Certificate`.
 
 **Q5 — The inspector's whole book.**
-`eq(kind,"exam") AND eq(inspector, 0x…) AND gte(examTs, T0)`
+`eq(type,"exam") AND eq(inspector, 0x…) AND gte(examTs, T0)`
 After an incident, the inspectorate pulls every examination an inspector ever performed. Held by no employer, deletable by no employer. An inspector under pressure to sign off a machine is protected by the same property that exposes one who does.
 
 **Q6 — Was the issuer actually registered?**
-`eq(kind,"reg") AND eq(inspector, 0x…) AND eq(scheme,"PJK3")`
+`eq(type,"reg") AND eq(inspector, 0x…) AND eq(scheme,"PJK3")`
 Run alongside Q1. A live certificate from an inspector with no live registration is the highest-value anomaly in the system, and it is one extra query to find.
 
 **Q7 — Open defects, worst first.**
-`eq(kind,"defect") AND eq(assetId,A) AND gte(severityTier, 3)`
+`eq(type,"defect") AND eq(assetId,A) AND gte(severityTier, 3)`
 `severityTier` is a **coarse integer bucket, chosen precisely because there is no server-side ordering**: filtering to tier 3+ narrows the set to something a page genuinely holds, so the client-side sort ranks a real set rather than reshuffling an arbitrary page.
 
 **Q8 — The extension anomaly report.**
-`eq(kind,"cert") AND gt(expiresAtTs, examTs + regimeSeconds)`
+`eq(type,"cert") AND gt(expiresAtTs, examTs + regimeSeconds)`
 Every certificate living longer than its own examination justifies. This is the query that makes "certificates are never extended" a checkable statement rather than a promise, and anyone can run it over the whole register without permission. Both operands are integers, which is the only reason it is a query at all.
 
 **Q9 — Was anybody actually checking?**
-`count(eq(kind,"gate") AND eq(siteId, S) AND gte(checkedTs, T0))`, and the same with `gte(resultCode, 1)`.
+`count(eq(type,"gate") AND eq(siteId, S) AND gte(checkedTs, T0))`, and the same with `gte(resultCode, 1)`.
 Scans performed, and scans that stopped something. A site with hundreds of movements and no gate checks is not a compliant site with a clean record; it is a site that never looked. **The absence of this number is the finding** — and it is the query an insurer runs before quoting, which is why it is in the model at all.
 
 ## 5. Expiry, extension and ownership as product features
@@ -257,7 +257,7 @@ Scans performed, and scans that stopped something. A site with hundreds of movem
 | Cursor pagination | the statutory pull and the inspector's book |
 | Tx hashes | rendered on the gate-check card; also what makes a backdated `examTs` self-contradicting |
 | Encrypted payloads | defect diagnoses encrypted, `severityTier` left public — the split that keeps silence expensive |
-| Project namespace | `app: "layak"` on every entity — a shared public database has no other separation |
+| Project namespace | `project: "layak"` on every entity — a shared public database has no other separation |
 
 ### Who pays for the writes
 

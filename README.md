@@ -31,7 +31,7 @@ submissions/
   selisih.sketch.ts               entity-model sketch — type-checks against @arkiv-network/sdk@0.7.0
   layak.sketch.ts                 entity-model sketch — type-checks against @arkiv-network/sdk@0.7.0
   evidence/                       everything that is evidence rather than description — see its README
-  video/                          LAYAK.mp4 · SELISIH.mp4 (+ .srt) — Playwright recordings of the live pages with an
+  video/                          index.html player · LAYAK.mp4 · SELISIH.mp4 (+ .srt/.vtt) — Playwright recordings of the live pages with an
                                   injected pointer and burned-in captions, neural voiceover (Edge TTS), a toggleable
                                   English subtitle track, and Remotion intro/outro cards. 1080p, ~2:17 each. Nothing staged.
 ```
@@ -48,7 +48,20 @@ Nothing here is deployed — the event forbids it and there is no open Arkiv net
 | The incumbent oracle's own nodes disagree — and the disagreement is discarded | 179 `NewTransmission` rounds decoded; per-node observations attributed by index | `evidence/chainlink_nodes.py`, `chainlink_nodes.json`, `chainlink_round_20458998.json` |
 | Both write-ups use (or explicitly decline) every documented Arkiv primitive | `python audit.py submissions/01-defi-selisih.md submissions/02-other-layak.md` | `audit.py` |
 | The walkthrough videos show the real pages | Playwright `recordVideo` against the public GitHub Pages URLs; pointer and captions injected into the DOM; per-step timing derived from the measured length of each narration line; Remotion renders the title/outro cards; ffmpeg muxes voiceover and subtitles — recorder, TTS script and compositions are reproducible | `submissions/video/` |
-| The artifact pages render correctly | Playwright: light/dark contrast, no horizontal overflow at 375 px and 929 px, SVG `role`/`aria-label`, no console errors | done in-session; not scripted |
+| The pages render correctly on phones and desktops | `qa/site.mjs` — Playwright against a local server and against the live site: standards mode + viewport meta, no overflow, fonts, SVG label collisions, dark-mode contrast, embedded code, link check | `qa/site.mjs`, CI |
+
+## One command
+
+```sh
+npm install && npm test        # tsc --strict against @arkiv-network/sdk@0.7.0, then the 17 invariants
+npm run qa:site                # Playwright: every page × iPhone 13 / 929 / 1440 — standards mode, overflow, fonts,
+                               # SVG label collisions, dark-mode contrast, embedded code, every internal link
+npm run qa:site:live           # the same against the published GitHub Pages site
+```
+
+The same three steps run in GitHub Actions on every push (`.github/workflows/verify.yml`).
+
+Attribute naming follows Arkiv's published `arkiv-best-practices` skill: every entity carries a `project` attribute and a `type` classifier; numerics are integers; expiry via `ExpirationTime` helpers; one wallet never writes in parallel.
 
 ## Reproducing the evidence
 
