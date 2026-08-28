@@ -1,0 +1,43 @@
+1
+00:00:03,000 --> 00:00:11,660
+SELISIH — Indonesian for the difference between two numbers. A multi-witness flight recorder for DeFi risk state, where the product is the disagreement.
+
+2
+00:00:12,460 --> 00:00:24,440
+The core screen: one round, one row per witness. Five agree, one is 440 bps lower, one never filed. The outlier is named by $creator; the silence is checkable.
+
+3
+00:00:25,240 --> 00:00:34,890
+It is not an oracle. Oracles collapse N observations into one settleable value. SELISIH never aggregates — seven different numbers is it working.
+
+4
+00:00:35,690 --> 00:00:47,230
+The kill test, run on real mainnet state: Chainlink vs Uniswap at the same block across the 5 Aug 2024 crash — 423 bps apart at the bottom.
+
+5
+00:00:48,030 --> 00:01:08,620
+Then the incumbent's own witnesses. Chainlink's 31 nodes at block 20,458,998 saw $2,141 to $2,335 — 868 bps — and the feed said $2,233. Signed, on-chain, discarded.
+
+6
+00:01:09,420 --> 00:01:19,280
+Only the owner can extend. That constraint became the mechanic: lifetime is a bet priced in storage, and anyone else preserves evidence with their own EvidencePin.
+
+7
+00:01:20,080 --> 00:01:30,400
+The hole: copying witness 1 is free and looks like consensus. A salted Commit before every reveal closes it — Arkiv's own store-commitments-not-secrets guidance.
+
+8
+00:01:31,200 --> 00:01:39,670
+The sketch type-checks with tsc --strict against the published SDK — which removed a redundant attribute and rewrote every query.
+
+9
+00:01:40,470 --> 00:01:51,680
+Executed, too: eight invariants against a cited spec of the documented semantics. All pass — including the one that proves live registrations answer wrong after they expire.
+
+10
+00:01:52,480 --> 00:02:03,020
+Why Arkiv: the writers are adversarial to each other, the reader must verify without permission, and expiry has to be a guarantee. Remove one and it is a worse Grafana.
+
+11
+00:02:03,820 --> 00:02:12,360
+Day one, the witnesses already exist: a decoder writes each Chainlink node's observation as its own entity. Nothing is deployed.
