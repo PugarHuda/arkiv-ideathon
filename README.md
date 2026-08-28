@@ -7,6 +7,8 @@ Two entries for *What can YOU [ ARKIV ] ?*, the Arkiv Network ideathon (ideas + 
 | **SELISIH** — a multi-witness flight recorder for DeFi risk state | Challenge 3 · DeFi (host: Marcos Miranda) | 31 Aug 2026, 23:59 UTC | [`submissions/01-defi-selisih.md`](submissions/01-defi-selisih.md) · [artifact](https://claude.ai/code/artifact/c4bf64e1-1f53-4a42-b6a3-de9e0aa91ee2) | [`submissions/FORM-selisih.md`](submissions/FORM-selisih.md) |
 | **LAYAK** — safety certification that cannot be out of date | Open lane · Other (host: Santiago Zuluaga) | 31 Aug 2026, 23:59 UTC | [`submissions/02-other-layak.md`](submissions/02-other-layak.md) · [artifact](https://claude.ai/code/artifact/60440808-a338-45c2-9c30-a390939e2226) | [`submissions/FORM-layak.md`](submissions/FORM-layak.md) |
 
+**Public site (no login):** <https://pugarhuda.github.io/arkiv-ideathon/> — [SELISIH](https://pugarhuda.github.io/arkiv-ideathon/submissions/selisih.html) · [LAYAK](https://pugarhuda.github.io/arkiv-ideathon/submissions/layak.html) · [evidence](https://pugarhuda.github.io/arkiv-ideathon/submissions/evidence/)
+
 Submission form: <https://tally.so/r/OD9eeY>. The form answers **are** the submission; the artifacts are the optional supporting link. Artifacts are private until shared from the page's share menu — share before pasting the link.
 
 ## The two ideas in one line each
