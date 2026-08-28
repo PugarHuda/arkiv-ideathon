@@ -1,0 +1,20 @@
+✔ LAYAK-1: an expired certificate is not returned — with no date filter anywhere (3.7998ms)
+✔ LAYAK-2: a FAILED exam writes the statutory record and NO certificate, atomically (0.4865ms)
+✔ LAYAK-3: the record outlives the certificate; the two lifetimes are opposite (0.3997ms)
+✔ LAYAK-4: only the owner can extend — and an owner extending a cert is CAUGHT by Q8 (2.8252ms)
+✔ LAYAK-5: a live certificate with a lapsed Asset is AMBER, not GREEN (0.5141ms)
+✔ LAYAK-6: a Prohibition turns the gate red without touching the certificate (no triggers exist) (0.5216ms)
+✔ LAYAK-7: resale moves $owner and keeps $creator on every certificate (0.4712ms)
+✔ LAYAK-8: .count() is one page — complianceGap sums pages, so 350 assets are 350, not 200 (3.0501ms)
+✔ LAYAK-9: an odd expiresIn is rejected (2-second blocks) (0.4021ms)
+✔ SELISIH-1: divergence board returns a SET per round, one row per witness, outlier attributable by creator (1.2271ms)
+✔ SELISIH-2: a correction is a NEW entity; the board shows originals only via not(supersedesRound) (0.4105ms)
+✔ SELISIH-3: only the owner may extend — a disputant CANNOT preserve a witness's reading; a pin can (0.5018ms)
+✔ SELISIH-4: conviction is a receipt — cost in ArkivEntityCreated scales with the funded lifetime (0.2281ms)
+✔ SELISIH-5: pinQueue lists readings that will lapse BEFORE the dispute deadline (0.2976ms)
+✔ SELISIH-6: silence is an event — a witness that stops renewing emits ArkivEntityExpired under its own key (0.2113ms)
+✔ SELISIH-7: track record uses createdBy natively — no mirrored witness attribute exists in the schema (0.5441ms)
+✔ SELISIH-8: RosterEpoch answers 'who was expected' after registrations have expired (0.3893ms)
+ℹ tests 17
+ℹ pass 17
+ℹ fail 0

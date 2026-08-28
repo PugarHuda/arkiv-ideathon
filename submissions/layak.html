@@ -1,0 +1,1046 @@
+<title>Layak Gate Check</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Roboto+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+  :root {
+    --bg: #EAEAE4; --surface: #FFFFFF; --surface-2: #F3F3EE;
+    --ink: #191C18; --muted: #5A6058; --rule: #D0D3C9;
+    --pass: #1B6B43; --pass-soft: #DCEBE1;
+    --fail: #A82A1E; --fail-soft: #F4DEDA;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131611; --surface: #1A1E18; --surface-2: #212620;
+      --ink: #E6E9E1; --muted: #8F968A; --rule: #2A3027;
+      --pass: #56B584; --pass-soft: #17301F;
+      --fail: #F0736A; --fail-soft: #32191A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #131611; --surface: #1A1E18; --surface-2: #212620;
+    --ink: #E6E9E1; --muted: #8F968A; --rule: #2A3027;
+    --pass: #56B584; --pass-soft: #17301F;
+    --fail: #F0736A; --fail-soft: #32191A;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 17px; line-height: 1.65; margin: 0;
+    padding: 3rem 1.5rem 6rem;
+  }
+
+  .wrap { max-width: 74rem; margin: 0 auto; display: flex; flex-direction: column; gap: 3.5rem; }
+  .col { max-width: 42rem; display: flex; flex-direction: column; gap: 1rem; }
+
+  h1, h2, h3, .eyebrow, .chip, th { font-family: "Archivo", system-ui, sans-serif; }
+  h1, h2, h3 { font-weight: 800; margin: 0; line-height: 1.1; text-wrap: balance; }
+  h1 { font-size: clamp(2.5rem, 6.5vw, 3.9rem); letter-spacing: -0.035em; }
+  h2 { font-size: 1.55rem; letter-spacing: -0.02em; }
+  h3 { font-size: 1rem; font-weight: 700; }
+  p { margin: 0; }
+
+  .eyebrow {
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .gloss {
+    font-size: 0.95rem; color: var(--muted); font-style: italic;
+    border-left: 3px solid var(--pass); padding-left: 0.85rem; max-width: 36rem;
+  }
+  .lede { font-size: 1.2rem; color: var(--muted); max-width: 40rem; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .chip {
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    border: 1px solid var(--rule); background: var(--surface); padding: 0.35rem 0.65rem;
+  }
+  .chip.go { border-color: var(--pass); color: var(--pass); }
+
+  hr { border: 0; border-top: 1px solid var(--rule); margin: 0; }
+
+  figure {
+    margin: 0; background: var(--surface); border: 1px solid var(--rule);
+    padding: 1.5rem; overflow-x: auto;
+  }
+  figure svg { display: block; width: 100%; max-width: 100%; height: auto; min-width: 30rem; }
+  figcaption {
+    font-size: 0.92rem; color: var(--muted); margin-top: 1rem; padding-top: 1rem;
+    border-top: 1px solid var(--rule); max-width: 44rem;
+  }
+  figcaption b { color: var(--ink); font-weight: 600; }
+
+  code {
+    font-family: "Roboto Mono", monospace; font-size: 0.84em;
+    background: var(--surface-2); padding: 0.1rem 0.3rem;
+    overflow-wrap: anywhere;   /* long predicates must wrap on narrow viewports, never widen the body */
+  }
+  pre code { overflow-wrap: normal; white-space: pre; }
+
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1.25rem; }
+  .card {
+    background: var(--surface); border: 1px solid var(--rule);
+    padding: 1.25rem; display: flex; flex-direction: column; gap: 0.6rem;
+  }
+  .card p { font-size: 0.96rem; color: var(--muted); }
+  .card b { color: var(--ink); }
+
+  .note {
+    background: var(--surface); border: 1px solid var(--rule);
+    border-left: 4px solid var(--fail); padding: 1.25rem 1.5rem;
+    display: flex; flex-direction: column; gap: 0.7rem; max-width: 46rem;
+  }
+  .note .eyebrow { color: var(--fail); }
+  .note p { color: var(--muted); font-size: 0.98rem; }
+  .note b { color: var(--ink); }
+
+  .tbl { background: var(--surface); border: 1px solid var(--rule); overflow-x: auto; }
+  .tbl td.hit { color: var(--fail); }
+  .tbl td.hit code { color: var(--fail); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.94rem; min-width: 34rem; }
+  th, td { text-align: left; padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th {
+    font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700;
+  }
+
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 2rem; }
+  ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.55rem; }
+  li { color: var(--muted); }
+  li b { color: var(--ink); font-weight: 600; }
+
+  .pull {
+    border-left: 4px solid var(--pass); padding-left: 1.25rem;
+    font-family: "Archivo", sans-serif; font-weight: 700; font-size: 1.4rem;
+    line-height: 1.25; letter-spacing: -0.02em; text-wrap: balance;
+  }
+
+  footer { color: var(--muted); font-size: 0.88rem; }
+</style>
+
+<div class="wrap">
+
+  <header class="col">
+    <p class="eyebrow">Arkiv Ideathon &middot; Open lane &middot; Other</p>
+    <h1>LAYAK</h1>
+    <p class="gloss">Layak is Indonesian for <em>fit</em> &mdash; fit to be used, fit to operate. Indonesia&rsquo;s certificate of operational fitness for lifting equipment is a Surat Keterangan Layak Operasi; a roadworthy vehicle is layak jalan. The word already means the one thing this product returns.</p>
+    <p class="lede">Statutory inspection certificates written as entities whose lifetime <em>is</em> the certificate&rsquo;s validity period &mdash; so an expired certificate is not a row with a stale date on it. It is a row that no longer exists to be returned.</p>
+    <div class="chips">
+      <span class="chip">Registries &amp; RWA</span>
+      <span class="chip">Fail-closed by construction</span>
+      <span class="chip go">Zero rows means stop</span>
+    </div>
+  </header>
+
+  <figure>
+    <svg viewBox="0 0 780 300" role="img" aria-label="The same gate-check query run twice: on a conventional database an expired certificate is still a row that a forgotten filter returns, while on Arkiv the expired entity has left the query surface and the query returns nothing.">
+      <defs>
+        <marker id="ly-a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+        </marker>
+        <marker id="ly-a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--fail)"/>
+        </marker>
+        <marker id="ly-a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--pass)"/>
+        </marker>
+      </defs>
+
+      <text x="0" y="16" font-family="Archivo, sans-serif" font-weight="700" font-size="11" fill="currentColor" opacity="0.55" letter-spacing="1.8">SAME QUESTION AT THE GATE &mdash; &ldquo;IS CRANE A-4471 LAYAK OPERASI?&rdquo;</text>
+
+      <text x="0" y="56" font-family="Archivo, sans-serif" font-weight="700" font-size="13" fill="currentColor" opacity="0.75">CONVENTIONAL DATABASE</text>
+      <rect x="0" y="70" width="130" height="42" fill="var(--surface-2)" stroke="currentColor" opacity="0.85"/>
+      <text x="65" y="96" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="11" fill="currentColor">SELECT &hellip;</text>
+      <line x1="130" y1="91" x2="196" y2="91" stroke="currentColor" opacity="0.75" marker-end="url(#ly-a1)"/>
+
+      <rect x="204" y="60" width="200" height="62" fill="none" stroke="currentColor" opacity="0.85"/>
+      <text x="304" y="82" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="11" fill="currentColor" opacity="0.7">cert A-4471</text>
+      <text x="304" y="102" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="11" fill="var(--fail)" font-weight="500">valid_until = 5 weeks ago</text>
+      <text x="304" y="140" text-anchor="middle" font-family="Source Serif 4, serif" font-size="12" fill="currentColor" opacity="0.6">the row is still there</text>
+
+      <line x1="404" y1="91" x2="470" y2="91" stroke="var(--fail)" stroke-width="2" marker-end="url(#ly-a2)"/>
+      <text x="437" y="50" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="10" fill="var(--fail)">one forgotten WHERE clause</text>
+      
+      <rect x="478" y="66" width="182" height="50" fill="var(--fail-soft)" stroke="var(--fail)" stroke-width="2"/>
+      <text x="569" y="88" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="15" fill="var(--fail)">GREEN</text>
+      <text x="569" y="106" text-anchor="middle" font-family="Source Serif 4, serif" font-size="11" fill="var(--fail)">uncertified crane waved through</text>
+
+      <line x1="0" y1="172" x2="780" y2="172" stroke="currentColor" opacity="0.2"/>
+
+      <text x="2" y="206" font-family="Archivo, sans-serif" font-weight="700" font-size="13" fill="var(--pass)">ARKIV</text>
+      <rect x="0" y="220" width="130" height="42" fill="var(--surface-2)" stroke="currentColor" opacity="0.85"/>
+      <text x="65" y="246" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="11" fill="currentColor">eq(assetId&hellip;)</text>
+      <line x1="130" y1="241" x2="196" y2="241" stroke="currentColor" opacity="0.75" marker-end="url(#ly-a1)"/>
+
+      <rect x="204" y="210" width="200" height="62" fill="none" stroke="currentColor" stroke-dasharray="4 4" opacity="0.4"/>
+      <text x="304" y="232" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="11" fill="currentColor" opacity="0.4">cert A-4471</text>
+      <text x="304" y="252" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="11" fill="currentColor" opacity="0.4">lifetime lapsed</text>
+      <text x="304" y="290" text-anchor="middle" font-family="Source Serif 4, serif" font-size="12" fill="currentColor" opacity="0.6">off the query surface</text>
+
+      <line x1="404" y1="241" x2="470" y2="241" stroke="var(--pass)" stroke-width="2" marker-end="url(#ly-a3)"/>
+      <text x="437" y="233" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="10" fill="var(--pass)">no filter</text>
+      <text x="437" y="214" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="10" fill="var(--pass)">to forget</text>
+
+      <rect x="478" y="216" width="182" height="50" fill="var(--pass-soft)" stroke="var(--pass)" stroke-width="2"/>
+      <text x="569" y="238" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="15" fill="var(--pass)">0 ROWS</text>
+      <text x="569" y="256" text-anchor="middle" font-family="Source Serif 4, serif" font-size="11" fill="var(--pass)">the machine does not move</text>
+    </svg>
+    <figcaption><b>The one edge that changes.</b> Both systems hold the same facts. The difference is whether &ldquo;expired certificates are not returned&rdquo; is a clause every query, report and third-party integration must honour forever &mdash; or the storage layer&rsquo;s behaviour that no query can opt out of. That is the gap between a control that works and a control that works until someone writes a new report.</figcaption>
+  </figure>
+
+  <section class="col">
+    <h2>The certificate is a PDF, and the date field is the first thing anyone edits</h2>
+    <p>Under <b>Permenaker No. 8 Tahun 2020</b>, every crane, hoist, forklift and lifting accessory operating in Indonesia must pass <em>riksa uji</em> &mdash; inspection and testing by a labour inspector or a registered inspection body &mdash; and carry a certificate of operational fitness. The first examination is followed by another within two years, and annually after that.</p>
+    <p>The person with the strongest motive to change that date is the contractor who owns the machine and loses a day&rsquo;s revenue when it comes off the line. A site supervisor has ninety seconds at the gate and a laminated card. An investigator after an accident gets the history from the contractor&rsquo;s own maintenance system. A machine with a bad record is sold, re-registered, and arrives clean &mdash; because the history lived in the seller&rsquo;s database.</p>
+    <p><b>What already exists, and what LAYAK does not pretend to replace.</b> Since 3 December 2025 Kemnaker issues K3 documents digitally through <b>TemanK3</b> &mdash; certificates, SKP and operator licences (SIO), barcode-verified. Read precisely, it is a <em>personnel</em>-credential verifier: its lookups are certificate/licence, expert card, auditor card and doctor SKP. Equipment fitness &mdash; the SLO for the crane itself and the riksa uji report behind it &mdash; is not among the documents named, and the portal exposes no equipment register, no history and no API. So the honest division of labour: <b>TemanK3 is the issuer of record for who an inspector is; LAYAK is the register for what they examined and whether it is still fit.</b> The <code>Registration</code> entity references TemanK3&rsquo;s licence number as its join key rather than duplicating it. What a verification portal structurally cannot do is the rest of this design: a certificate that is absent rather than stale, a gate check that is recorded, a register that survives the operator, and verification by a stranger without the portal being up.</p>
+    <p class="pull">Validity stops being data you must remember to check, and becomes the storage contract.</p>
+  </section>
+
+  <section class="grid3">
+    <div class="card">
+      <h3>The gate check is two predicates</h3>
+      <p>A live certificate must exist, and no live prohibition may. <b>You get green, or you get nothing.</b> There is no date comparison anywhere to get wrong, and nothing to remember.</p>
+    </div>
+    <div class="card">
+      <h3>Two-level expiry</h3>
+      <p>The inspector&rsquo;s own registration is also an entity with a lifetime, renewed only by the body that issued it. <b>A lapsed inspector cannot backdate themselves</b> into good standing.</p>
+    </div>
+    <div class="card">
+      <h3>History survives resale</h3>
+      <p><code>$owner</code> transfers with the machine; every examination keeps its immutable <code>$creator</code>. <b>You cannot launder a machine&rsquo;s past by selling it</b> &mdash; the past was never the seller&rsquo;s to leave behind.</p>
+    </div>
+  </section>
+
+  <div class="note">
+    <p class="eyebrow">What testing the design against the regulations found</p>
+    <p>A first draft let the certificate entity carry everything. Then the statutes were checked: LOLER requires the Report of Thorough Examination to be <b>retained for the life of the equipment and produced on demand</b>, and Indonesia&rsquo;s <em>riksa uji</em> documentation carries the same expectation. A model where the record vanishes when the certificate lapses <b>fails an audit on day one</b> &mdash; and expiry removing an entity from the query surface is no help when the statutory duty is precisely to produce it on demand.</p>
+    <p>So one examination now writes <b>two entities with deliberately opposite lifetimes</b>, in a single batch. That is the diagram below, and it is the strongest thing in the design.</p>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 780 340" role="img" aria-label="One riksa uji examination writes two entities in a single batch: a Certificate whose lifetime is the validity period and which fails closed, and an ExamRecord retained for the life of the equipment.">
+      <defs>
+        <marker id="ly-a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+        </marker>
+        <marker id="ly-a6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+
+      <rect x="285" y="12" width="210" height="48" fill="var(--surface-2)" stroke="currentColor" stroke-width="2"/>
+      <text x="390" y="34" text-anchor="middle" font-family="Archivo, sans-serif" font-size="14" font-weight="800" fill="currentColor">RIKSA UJI</text>
+      <text x="390" y="51" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="11" fill="currentColor" opacity="0.65">one examination</text>
+
+      <line x1="330" y1="60" x2="220" y2="104" stroke="currentColor" opacity="0.8" marker-end="url(#ly-a5)"/>
+      <line x1="450" y1="60" x2="560" y2="104" stroke="currentColor" opacity="0.8" marker-end="url(#ly-a5)"/>
+      <text x="390" y="88" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="10" fill="currentColor" opacity="0.55">one mutateEntities batch</text>
+
+      <rect x="30" y="110" width="300" height="104" fill="var(--pass-soft)" stroke="var(--pass)" stroke-width="2"/>
+      <text x="180" y="138" text-anchor="middle" font-family="Archivo, sans-serif" font-size="15" font-weight="800" fill="var(--pass)">Certificate</text>
+      <text x="180" y="160" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="11" fill="currentColor" opacity="0.75">lifetime = validity period</text>
+      <text x="180" y="180" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="11" fill="var(--fail)" font-weight="500">extendEntity &mdash; forbidden</text>
+      <text x="180" y="200" text-anchor="middle" font-family="Source Serif 4, serif" font-size="12" fill="currentColor" opacity="0.7">governs whether it moves</text>
+
+      <rect x="450" y="110" width="300" height="104" fill="none" stroke="currentColor" stroke-width="2" opacity="0.85"/>
+      <text x="600" y="138" text-anchor="middle" font-family="Archivo, sans-serif" font-size="15" font-weight="800" fill="currentColor">ExamRecord</text>
+      <text x="600" y="160" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="11" fill="currentColor" opacity="0.75">extended with the asset</text>
+      <text x="600" y="180" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="11" fill="currentColor" opacity="0.75">pass AND fail alike</text>
+      <text x="600" y="200" text-anchor="middle" font-family="Source Serif 4, serif" font-size="12" fill="currentColor" opacity="0.7">satisfies the retention duty</text>
+
+      <text x="0" y="252" font-family="Archivo, sans-serif" font-weight="700" font-size="10" fill="currentColor" opacity="0.5" letter-spacing="1.5">LIFETIMES</text>
+
+      <rect x="30" y="266" width="150" height="18" fill="var(--pass)" opacity="0.85"/>
+      <line x1="180" y1="258" x2="180" y2="292" stroke="var(--pass)" stroke-width="2"/>
+      <text x="190" y="279" font-family="Roboto Mono, monospace" font-size="11" fill="var(--pass)" font-weight="500">lapses &mdash; gate goes red</text>
+
+      <rect x="450" y="266" width="270" height="18" fill="currentColor" opacity="0.5"/>
+      <line x1="720" y1="275" x2="752" y2="275" stroke="currentColor" opacity="0.7" marker-end="url(#ly-a6)"/>
+      <text x="450" y="308" font-family="Roboto Mono, monospace" font-size="11" fill="currentColor" opacity="0.7">&rarr; life of the equipment</text>
+
+      <text x="30" y="332" font-family="Source Serif 4, serif" font-size="12" fill="currentColor" opacity="0.6">Same event. Opposite lifetimes. They answer different questions.</text>
+    </svg>
+    <figcaption><b>The shape of the lifetimes is the shape of the regulation.</b> A failed examination writes an <code>ExamRecord</code> with <code>outcomeCode: 2</code> and <b>no certificate at all</b> &mdash; the most important row in the system, and the one a paper regime loses most often. Absence is the fail state, and it is the same absence as expiry. That is the point.</figcaption>
+  </figure>
+
+  <figure>
+    <svg viewBox="0 0 780 384" role="img" aria-label="Entity model: Asset, Certificate, ExamRecord, Registration and DefectReport joined by shared attribute keys, with five different lifetimes.">
+      <defs>
+        <marker id="ly-a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+
+      <rect x="285" y="122" width="215" height="90" fill="var(--pass-soft)" stroke="var(--pass)" stroke-width="2"/>
+      <text x="392" y="152" text-anchor="middle" font-family="Archivo, sans-serif" font-size="16" font-weight="800" fill="var(--pass)">Certificate</text>
+      <text x="392" y="174" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="11" fill="currentColor" opacity="0.7">1 yr &middot; 2 yr post-commissioning</text>
+      <text x="392" y="194" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="11" fill="var(--fail)">never extended</text>
+
+      <rect x="20" y="30" width="185" height="68" fill="none" stroke="currentColor" opacity="0.85"/>
+      <text x="112" y="57" text-anchor="middle" font-family="Archivo, sans-serif" font-size="13" font-weight="700" fill="currentColor">Asset</text>
+      <text x="112" y="77" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="10" fill="currentColor" opacity="0.6">2y &middot; $owner transfers</text>
+
+      <rect x="20" y="236" width="185" height="68" fill="none" stroke="currentColor" opacity="0.85"/>
+      <text x="112" y="263" text-anchor="middle" font-family="Archivo, sans-serif" font-size="13" font-weight="700" fill="currentColor">DefectReport</text>
+      <text x="112" y="283" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="10" fill="currentColor" opacity="0.6">30d &middot; extended on escalation</text>
+
+      <rect x="580" y="30" width="180" height="68" fill="none" stroke="currentColor" opacity="0.85"/>
+      <text x="670" y="57" text-anchor="middle" font-family="Archivo, sans-serif" font-size="13" font-weight="700" fill="currentColor">Registration</text>
+      <text x="670" y="77" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="10" fill="currentColor" opacity="0.6">PJK3 renews, not the inspector</text>
+
+      <rect x="580" y="236" width="180" height="68" fill="none" stroke="currentColor" opacity="0.85"/>
+      <text x="670" y="263" text-anchor="middle" font-family="Archivo, sans-serif" font-size="13" font-weight="700" fill="currentColor">ExamRecord</text>
+      <text x="670" y="283" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="10" fill="currentColor" opacity="0.6">life of the equipment</text>
+
+      <line x1="205" y1="70" x2="285" y2="140" stroke="currentColor" opacity="0.75" marker-end="url(#ly-a4)"/>
+      <text x="222" y="112" font-family="Roboto Mono, monospace" font-size="11" fill="currentColor" opacity="0.7">assetId</text>
+
+      <line x1="205" y1="266" x2="285" y2="198" stroke="currentColor" opacity="0.75" marker-end="url(#ly-a4)"/>
+      <text x="218" y="242" font-family="Roboto Mono, monospace" font-size="11" fill="currentColor" opacity="0.7">assetId</text>
+
+      <line x1="580" y1="70" x2="500" y2="140" stroke="currentColor" opacity="0.75" marker-end="url(#ly-a4)"/>
+      <text x="570" y="112" text-anchor="end" font-family="Roboto Mono, monospace" font-size="11" fill="currentColor" opacity="0.7">inspector</text>
+
+      <line x1="580" y1="266" x2="500" y2="198" stroke="currentColor" opacity="0.75" marker-end="url(#ly-a4)"/>
+      <text x="574" y="242" text-anchor="end" font-family="Roboto Mono, monospace" font-size="11" fill="currentColor" opacity="0.7">examRecordId</text>
+
+      <text x="392" y="334" text-anchor="middle" font-family="Source Serif 4, serif" font-size="12" fill="currentColor" opacity="0.6">Five entity types, five lifetimes &mdash; thirty days to the service life of a machine.</text>
+      <text x="392" y="354" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="11" fill="currentColor" opacity="0.45">expiresAtTs mirrored as an integer &mdash; system expiry is not range-queryable</text>
+      <text x="392" y="374" text-anchor="middle" font-family="Roboto Mono, monospace" font-size="11" fill="currentColor" opacity="0.45">joined by shared attribute keys &mdash; there are no joins</text>
+    </svg>
+    <figcaption><b>Extension is the liveness signal; its absence is the integrity signal.</b> Assets are extended while in service, registrations while the body still vouches, defect reports while someone is still investigating, examination records for the life of the machine. Certificates alone are never extended &mdash; the mechanic everything else depends on would, on this one entity, be forgery.</figcaption>
+  </figure>
+
+  <section class="col">
+    <h2>Two entities that came out of taking Arkiv&rsquo;s limits seriously</h2>
+    <p>Arkiv never executes logic &mdash; no triggers, no enforcement &mdash; and only an entity&rsquo;s owner may extend it. Both limits pushed the design somewhere better than where it started.</p>
+  </section>
+
+  <section class="grid3">
+    <div class="card">
+      <h3>Prohibition &mdash; revocation without triggers</h3>
+      <p>A tier-4 defect cannot revoke a certificate, because the database executes nothing. Real regimes solve this with a separate instrument, a prohibition notice, and so does LAYAK. <b>The gate asks two questions instead of one</b>, and revocation never has to reach back into an issued certificate.</p>
+    </div>
+    <div class="card">
+      <h3>GateCheck &mdash; proof that somebody looked</h3>
+      <p>After an accident the question is not only <i>was it certified</i> &mdash; it is <b>did anybody check</b>, and today that is a supervisor&rsquo;s word against a contractor&rsquo;s. Every scan writes a signed, timestamped entity no employer can delete. Diligence becomes provable rather than assertable.</p>
+    </div>
+    <div class="card">
+      <h3>Escalation &mdash; not an extension</h3>
+      <p>Only the owner can extend, and a defect report&rsquo;s owner is the worker who filed it &mdash; who may be off-shift or gone. So escalation is <b>a new entity by the safety officer</b>. A design needing the original reporter to still be around would fail on exactly the reports that matter most.</p>
+    </div>
+  </section>
+
+  <section class="col" style="max-width: 100%;">
+    <h2>The queries the product lives on</h2>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Screen</th><th>Predicate</th><th>Why it holds</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>Gate check</b></td>
+            <td><code>eq(assetId, A) &and; eq(certType, "SLO-angkat")</code> must return &ge;1<br><code>eq(kind,"prohibition") &and; eq(assetId, A)</code> must return 0</td>
+            <td>Green needs both. An out-of-date certificate cannot be in the first set; a lifted prohibition cannot be in the second. No date comparison exists to get wrong.</td>
+          </tr>
+          <tr>
+            <td><b>Site compliance</b></td>
+            <td><code>count</code> of assets on site vs <code>count</code> of live certificates</td>
+            <td>The <b>gap</b> between two counts is the risk number. A site that logs nothing scores worse, not better.</td>
+          </tr>
+          <tr>
+            <td><b>Renewal queue</b></td>
+            <td><code>eq(siteId, S) &and; lt(expiresAtTs, now+7d) &and; gte(expiresAtTs, now)</code></td>
+            <td>Why <code>expiresAtTs</code> is mirrored as an integer: system expiry governs what is returned, but cannot be range-queried.</td>
+          </tr>
+          <tr>
+            <td><b>Statutory pull</b></td>
+            <td><code>eq(kind,"exam") &and; eq(assetId, A) &and; gte(examTs, T0)</code></td>
+            <td>Every examination this machine ever had, passes and failures alike. The reason <code>ExamRecord</code> is a separate entity.</td>
+          </tr>
+          <tr>
+            <td><b>Inspector&rsquo;s book</b></td>
+            <td><code>eq(inspector, 0x&hellip;) &and; gte(examTs, T0)</code></td>
+            <td>Held by no employer, deletable by no employer. Protects the honest inspector and exposes the other kind.</td>
+          </tr>
+          <tr>
+            <td><b>Was the issuer registered?</b></td>
+            <td><code>eq(inspector, 0x&hellip;) &and; eq(scheme, "PJK3")</code></td>
+            <td>A live certificate from an inspector with no live registration is the highest-value anomaly in the system.</td>
+          </tr>
+          <tr>
+            <td><b>Open defects</b></td>
+            <td><code>eq(assetId, A) &and; gte(severityTier, 3)</code></td>
+            <td>A coarse integer bucket, chosen because there is no server-side ordering &mdash; it keeps the top-N honest.</td>
+          </tr>
+          <tr>
+            <td><b>Extension anomaly</b></td>
+            <td><code>gt(expiresAtTs, examTs + regimeSeconds)</code></td>
+            <td>Every certificate living longer than its own examination justifies. This is what makes &ldquo;never extended&rdquo; a <b>checkable statement rather than a promise</b> &mdash; and anyone can run it over the whole register.</td>
+          </tr>
+          <tr>
+            <td><b>Was anybody checking?</b></td>
+            <td><code>count(eq(kind,"gate") &and; eq(siteId, S) &and; gte(checkedTs, T0))</code></td>
+            <td>A site with hundreds of movements and no gate checks is not a clean record; it is a site that never looked. <b>The absence of this number is the finding.</b></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr>
+
+  <section class="col" style="max-width: 100%;">
+    <h2>The Arkiv surface this design uses</h2>
+    <p class="lede" style="font-size: 1rem;">Every primitive below does real work. The one that is <em>not</em> used is listed too, because leaving it out was the decision.</p>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Primitive</th><th>Where it does work</th></tr></thead>
+        <tbody>
+          <tr><td><code>expiresIn</code></td><td><b>The idea itself.</b> Seven differentiated lifetimes: 30d defects &middot; 90d gate checks &middot; 1y certificates and escalations &middot; 2y assets &middot; the registration period &middot; a prohibition until it is lifted &middot; the service life of the machine.</td></tr>
+          <tr><td class="hit"><b>Owner-only extension</b></td><td class="hit">Shaped three decisions: escalation is a new entity, revocation is a new entity, and certificate extension is made <b>detectable</b> rather than claimed impossible &mdash; the inspector owns the certificate and could extend it, so the honest guarantee is that they cannot do it in secret.</td></tr>
+          <tr><td><code>extendEntity</code></td><td>Assets, registrations, records and prohibitions &mdash; and on certificates, an anomaly the extension report catches.</td></tr>
+          <tr><td><b>Cost = size &times; lifetime</b></td><td>Why a 30-day defect report is cheap enough to file honestly, and a 90-day gate check cheap enough to write on every single scan.</td></tr>
+          <tr><td><code>$creator</code></td><td>The inspector&rsquo;s signature; the accrediting body&rsquo;s on a registration. Neither can be reassigned.</td></tr>
+          <tr><td><code>$owner</code> &middot; <code>changeOwnership</code></td><td>Operator of record, transferred when the machine is sold &mdash; so history travels with the asset.</td></tr>
+          <tr><td><code>mutateEntities</code></td><td>Certificate and examination record written as one atomic batch.</td></tr>
+          <tr><td><code>updateEntity</code></td><td>Avoided entirely. Corrections are new entities carrying <code>supersedesCertId</code>.</td></tr>
+          <tr><td class="hit"><code>deleteEntity</code></td><td class="hit">Deliberately unused. A contractor asking for a record to be removed is the request this system exists to refuse.</td></tr>
+          <tr><td>Numeric attributes</td><td>Proof-load ratio as basis points (<code>12500</code> = 1.25&times;), never a float &mdash; a string cannot answer <code>gte(testRatioBps, 12500)</code>.</td></tr>
+          <tr><td>String attributes</td><td>Enumerated slugs only. No wildcard search exists in the SDK, so none is designed for.</td></tr>
+          <tr><td>Counts &middot; cursors</td><td>Site compliance as the gap between two counts; cursor pagination on the statutory pull.</td></tr>
+          <tr><td>Polled events</td><td>Costs this design nothing: the gate check is a pull when someone stands at the gate, and the renewal queue is a scheduled morning read.</td></tr>
+          <tr><td>Encrypted payloads</td><td>Defect diagnoses encrypted to owner, body and insurer; <code>severityTier</code> left public. The split is what keeps silence expensive.</td></tr>
+          <tr><td>Project namespace</td><td><code>app: "layak"</code> on every entity, first in every predicate. In a fail-closed system that term is load-bearing &mdash; it stops another project&rsquo;s <code>"cert"</code> entity turning a red gate green.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color: var(--muted); margin-top: 1.5rem; max-width: 42rem;"><b>Who pays.</b> The inspection body pays for the certificate and the record &mdash; two writes against the fee for a scheduled visit by a qualified engineer with test equipment is a rounding error, and it buys them a verifiable credential rather than a compliance expense. The site pays for its own gate checks. The asset owner pays to keep the machine on the register, which is the point: <b>paying is how you claim responsibility, and letting it lapse is how you stop.</b></p>
+  </section>
+
+  <section class="col">
+    <h2>Two objections a practitioner raises in the first minute</h2>
+    <p><b>&ldquo;What happens when the gate has no signal?&rdquo;</b> This is the right objection to fail-closed. A port at 5am with a flaky uplink cannot stop every machine because a query timed out &mdash; a safety control that halts operations during a network blip gets switched off within a week, and then protects nothing.</p>
+    <p>So the gate app holds a signed local cache for assets on its own site. Offline, it answers from cache and writes the gate check with <code>resultCode: 3</code> and <code>cacheAgeSec</code> &mdash; the check happened, it was degraded, and <i>how</i> degraded is a number. Past a site-set staleness bound the cache stops answering and the machine genuinely stops. <b>The degradation is recorded rather than hidden</b>, and an insurer will ask for that count.</p>
+    <p><b>&ldquo;What stops an inspector backdating an examination?&rdquo;</b> Nothing stops them writing <code>examTs</code> as last Tuesday. But every Arkiv write is a transaction, so the time it was <i>actually</i> written is on-chain and not something the writer controls. A certificate claiming an examination three weeks before its own write is a permanent self-contradiction under the inspector&rsquo;s own key.</p>
+    <p style="color: var(--muted);">Be precise about the limit: today that reads a transaction receipt per entity rather than a range predicate, so it is a check you run on a certificate you already doubt &mdash; not a standing sweep. Pretending otherwise would be inventing API, which is why it appears below as protocol feedback instead.</p>
+  </section>
+
+  <section class="col">
+    <h2>What this design would ask of Arkiv</h2>
+    <p>The roadmap says the phase after Devcon 8 is decided with the teams using Arkiv, and the current architecture came out of hackathon feedback. This is what this design earned from friction rather than from a wishlist.</p>
+    <ul>
+      <li><b>A queryable creation block.</b> The strongest anti-fraud check here &mdash; claimed examination date versus actual write time &mdash; is a verification, not a sweep. As a numeric system attribute it would be a range predicate, and backdating would be caught across the whole register at once.</li>
+      <li><b>Owner-delegable extension.</b> An examination record must outlive the equipment, but only its owner may extend it &mdash; and that owner is an inspector who may retire, or a body that may be wound up, decades before the machine is scrapped. <code>changeOwnership</code> to a successor works and needs the outgoing owner present and willing. A delegation that survives the delegator fits statutory retention far better.</li>
+    </ul>
+    <p style="color: var(--muted);">Neither blocks the design. Both would remove a workaround.</p>
+  </section>
+
+  <hr>
+
+  <section class="two">
+    <div class="col">
+      <h2>Why Arkiv, not Postgres</h2>
+      <ul>
+        <li><b>The party who holds the data is the party the data is about.</b> The contractor runs the maintenance system, and the contractor is who the certificate exists to constrain.</li>
+        <li><b>Expiry must be a guarantee, not a filter.</b> This is the whole idea, and the first figure is the whole argument.</li>
+        <li><b>The reader is a stranger.</b> A site supervisor, an insurer, a labour inspector &mdash; none have an account on the contractor&rsquo;s system, and none should have to trust it.</li>
+        <li><b>The history must outlive the relationship.</b> Companies fold and their software is decommissioned, but the statutory record is owed for the life of the equipment. It cannot live inside the operator.</li>
+      </ul>
+      <p><b>The fourth pillar, stated precisely.</b> Block production stays centralised through November 2026 per the roadmap. LAYAK relies on the <b>Ethereum anchor</b>: the operator can order or refuse writes but cannot rewrite an anchored certificate, its <code>$creator</code> or its creation block without it showing against L1 &mdash; which is what the backdating and extension-anomaly checks stand on. Censorship-resistance is a later phase and is not claimed.</p>
+    </div>
+    <div class="col">
+      <h2>What deliberately stays off</h2>
+      <ul>
+        <li><b>The reports themselves.</b> Riksa uji reports, load-test charts and thermography stay in object storage behind a <code>reportHash</code>.</li>
+        <li><b>Personal data.</b> Inspectors are addresses; workers are a role, never a person. Identity resolution stays inside the PJK3.</li>
+        <li><b>Enforcement.</b> Nothing here stops a crane. LAYAK makes the check answerable in one query &mdash; the gate and the stop-work order are the site&rsquo;s own systems reading it.</li>
+        <li><b>Anything in the next 50&nbsp;ms.</b> No interlocks, no PLC in the loop. A design that put this in a safety-critical control path would be worse than the clipboard it replaces.</li>
+      </ul>
+    </div>
+  </section>
+
+  <hr>
+
+
+  <section class="col" style="max-width: 100%;">
+    <h2>Entity-model sketch in TypeScript</h2>
+    <p class="lede" style="font-size: 1rem;">Offline design, not a deployment &mdash; the fundamentals say sketching with <code>@arkiv-network/sdk</code> is fine. <b>It type-checks with <code>tsc --strict</code> against the published <code>@arkiv-network/sdk@0.7.0</code> package</b> &mdash; installed from npm, not summarised from docs. That check corrected the first draft in four places: the API is client-based (<code>publicClient.select().where().limit().fetch()</code>, operators from <code>@arkiv-network/sdk/query</code>), attributes are an array of <code>{key, value}</code>, <code>contentType</code> is required, and <code>select()</code> returns a projected type rather than a full <code>Entity</code>. It also surfaced <code>.createdBy()</code>, <code>not(key)</code>, <code>validAtBlock()</code>, <code>createdAtBlock</code> metadata, and <code>cost</code> in the on-chain events &mdash; none of which the summary docs mention.</p>
+    <details style="background: var(--surface); border: 1px solid var(--rule); padding: 1rem 1.25rem;">
+      <summary style="cursor: pointer; font-weight: 600;">layak.sketch.ts &mdash; click to expand</summary>
+      <pre style="overflow-x: auto; font-size: 0.78rem; line-height: 1.5; margin: 1rem 0 0; padding: 0; background: transparent;"><code>// LAYAK — entity-model sketch, type-checked against the REAL @arkiv-network/sdk@0.7.0 package.
+// Offline design only: no client is ever connected here, and nothing is deployed.
+// `tsc --strict` passes against the published types (output reproduced in the write-up).
+
+import { createPublicClient, createWalletClient, type Attribute } from &quot;@arkiv-network/sdk&quot;;
+import { eq, gt, gte, lt, type Predicate } from &quot;@arkiv-network/sdk/query&quot;;
+import type { Hex } from &quot;viem&quot;;
+
+type Pub = ReturnType&lt;typeof createPublicClient&gt;;
+type Wal = ReturnType&lt;typeof createWalletClient&gt;;
+type HasAttrs = { readonly attributes: Attribute[] };    // select() returns a PROJECTED type, not full Entity
+
+// ---------- constants ----------
+const APP = &quot;layak&quot;;                           // project namespace — on EVERY entity, first in EVERY predicate
+const CT = &quot;application/json&quot;;
+const ONE_YEAR = 31_536_000;
+const TWO_YEARS = 63_072_000;
+const GATE_CHECK_SEC = 7_776_000;              // 90d
+const EXAM_RECORD_SEC = 157_680_000;           // 5y, re-extended with the asset for the life of the equipment
+const PAGE = 200;                              // SDK hard cap per page
+
+// Permenaker 8/2020 cadence: first periodic exam ≤2y after commissioning, then every 1y.
+const REGIME_SECONDS: Record&lt;number, number&gt; = { 1: TWO_YEARS, 2: ONE_YEAR };
+
+const even = (s: number) =&gt; (s % 2 === 0 ? s : s + 1);   // InvalidExpirationError otherwise
+const attrs = (o: Record&lt;string, string | number&gt;): Attribute[] =&gt; Object.entries(o).map(([key, value]) =&gt; ({ key, value }));
+const attr = (e: HasAttrs, key: string) =&gt; e.attributes.find(a =&gt; a.key === key)?.value;
+const now = () =&gt; Math.floor(Date.now() / 1000);
+
+// `.count()` in 0.7.0 is the length of ONE page (≤200). Site-level tallies can exceed that → sum pages.
+async function countAll(p: Pub, preds: Predicate[]) {
+  const res = await p.select({ key: true }).where(preds).limit(PAGE).fetch();
+  let total = res.entities.length;
+  while (res.hasNextPage()) { await res.next(); total += res.entities.length; }   // next() mutates in place
+  return total;
+}
+
+// ---------- 1. one riksa uji writes TWO entities with OPPOSITE lifetimes, in ONE atomic tx ----------
+export async function recordExamination(w: Wal, x: {
+  assetId: string; siteId: string; certType: string; bodyId: string; examRecordId: string;
+  regimeCode: 1 | 2; outcomeCode: 0 | 1 | 2; defectCount: number; testRatioBps: number; reportHash: string;
+}) {
+  const examTs = now();
+  const validity = REGIME_SECONDS[x.regimeCode];
+  const creates = [
+    // the statutory record — passes AND failures — must outlive the certificate
+    { payload: new Uint8Array(0), contentType: CT, expiresIn: EXAM_RECORD_SEC,
+      attributes: attrs({ app: APP, kind: &quot;exam&quot;, assetId: x.assetId, examRecordId: x.examRecordId, bodyId: x.bodyId,
+                          examTs, outcomeCode: x.outcomeCode, defectCount: x.defectCount,
+                          testRatioBps: x.testRatioBps, regimeCode: x.regimeCode, reportHash: x.reportHash }) },
+  ];
+  if (x.outcomeCode !== 2) {
+    // the operative certificate — its LIFETIME IS the validity. Never updated. Never extended by product rule.
+    creates.push({ payload: new Uint8Array(0), contentType: CT, expiresIn: even(validity),
+      attributes: attrs({ app: APP, kind: &quot;cert&quot;, assetId: x.assetId, certType: x.certType, siteId: x.siteId,
+                          bodyId: x.bodyId, examRecordId: x.examRecordId, issuedTs: examTs,
+                          expiresAtTs: examTs + validity, outcomeCode: x.outcomeCode }) });
+  }
+  // a FAILED examination writes the record and NO certificate: absence is the fail state, same as expiry
+  return w.mutateEntities({ creates });
+}
+
+// ---------- 2. the gate check — two trivial predicates, both must hold ----------
+export async function gateCheck(p: Pub, assetId: string, certType: string) {
+  const certs = await p.select({ key: true, creator: true, attributes: true, createdAtBlock: true })
+    .where(eq(&quot;app&quot;, APP), eq(&quot;kind&quot;, &quot;cert&quot;), eq(&quot;assetId&quot;, assetId), eq(&quot;certType&quot;, certType))
+    .limit(5).fetch();                                    // an expired cert CANNOT be in this set
+  const prohibitions = await p.select({ key: true })
+    .where(eq(&quot;app&quot;, APP), eq(&quot;kind&quot;, &quot;prohibition&quot;), eq(&quot;assetId&quot;, assetId))
+    .limit(5).count();                                    // a lifted prohibition CANNOT be in this count
+  const assetLive = await p.select({ key: true })
+    .where(eq(&quot;app&quot;, APP), eq(&quot;kind&quot;, &quot;asset&quot;), eq(&quot;assetId&quot;, assetId))
+    .limit(1).count();
+  if (certs.entities.length === 0) return { code: &quot;RED_NO_CERT&quot; as const };
+  if (prohibitions &gt; 0)            return { code: &quot;RED_PROHIBITION&quot; as const };
+  if (assetLive === 0)             return { code: &quot;AMBER_UNCLAIMED&quot; as const, cert: certs.entities[0] };
+  return { code: &quot;GREEN&quot; as const, cert: certs.entities[0] };   // card shows creator + createdAtBlock
+}
+
+// every scan is itself an entity: diligence becomes provable, not assertable
+export async function logGateCheck(w: Wal, assetId: string, siteId: string, resultCode: 0 | 1 | 2 | 3, cacheAgeSec = 0) {
+  return w.createEntity({
+    payload: new Uint8Array(0), contentType: CT, expiresIn: GATE_CHECK_SEC,
+    attributes: attrs({ app: APP, kind: &quot;gate&quot;, assetId, siteId, checkedTs: now(), resultCode, cacheAgeSec }),
+  });
+}
+
+// ---------- 3. site compliance — the gap between two HONEST counts ----------
+export async function complianceGap(p: Pub, siteId: string, certType: string) {
+  const assets = await countAll(p, [eq(&quot;app&quot;, APP), eq(&quot;kind&quot;, &quot;asset&quot;), eq(&quot;siteId&quot;, siteId)]);
+  const certs  = await countAll(p, [eq(&quot;app&quot;, APP), eq(&quot;kind&quot;, &quot;cert&quot;),  eq(&quot;siteId&quot;, siteId), eq(&quot;certType&quot;, certType)]);
+  return { assets, certs, gap: assets - certs };          // the gap is the risk number
+}
+
+// ---------- 4. renewal queue — Q3: why expiresAtTs is mirrored as an integer ----------
+// Entity.expiresAtBlock is returned as METADATA but is not a predicate key; the attribute mirror is.
+export async function expiringWithin(p: Pub, siteId: string, seconds: number) {
+  const t = now();
+  const res = await p.select({ key: true, attributes: true })
+    .where(eq(&quot;app&quot;, APP), eq(&quot;kind&quot;, &quot;cert&quot;), eq(&quot;siteId&quot;, siteId), gte(&quot;expiresAtTs&quot;, t), lt(&quot;expiresAtTs&quot;, t + seconds))
+    .limit(PAGE).fetch();
+  return res.entities;
+}
+
+// ---------- 5. extension anomaly — Q8: &quot;never extended&quot; as a CHECKABLE statement ----------
+export async function extensionAnomalies(p: Pub, assetId: string) {
+  const exams = await p.select({ key: true, attributes: true })
+    .where(eq(&quot;app&quot;, APP), eq(&quot;kind&quot;, &quot;exam&quot;), eq(&quot;assetId&quot;, assetId)).limit(50).fetch();
+  const out: string[] = [];
+  for (const e of exams.entities) {
+    const bound = Number(attr(e, &quot;examTs&quot;)) + REGIME_SECONDS[Number(attr(e, &quot;regimeCode&quot;))];
+    const over = await p.select({ key: true })
+      .where(eq(&quot;app&quot;, APP), eq(&quot;kind&quot;, &quot;cert&quot;), eq(&quot;examRecordId&quot;, String(attr(e, &quot;examRecordId&quot;))), gt(&quot;expiresAtTs&quot;, bound))
+      .limit(1).count();
+    if (over &gt; 0) out.push(String(attr(e, &quot;examRecordId&quot;)));
+  }
+  return out;                                             // certificates living longer than their exam justifies
+}
+
+// ---------- 6. backdating check — claimed issuedTs vs the block it was ACTUALLY written in ----------
+// createdAtBlock is metadata on every entity (select createdAtBlock:true) — no receipt lookup needed.
+// It is not a predicate key, so this is a per-entity verification rather than a register-wide sweep.
+export function looksBackdated(cert: HasAttrs &amp; { readonly createdAtBlock: bigint },
+                               blockToUnix: (b: bigint) =&gt; number, toleranceSec = 86_400) {
+  return Number(attr(cert, &quot;issuedTs&quot;)) &lt; blockToUnix(cert.createdAtBlock) - toleranceSec;
+}
+
+// ---------- 7. escalation is a NEW entity — the reporter may be gone, and only the owner can extend ----------
+export async function escalate(w: Wal, defectId: string, assetId: string, severityTier: number) {
+  return w.createEntity({
+    payload: new Uint8Array(0), contentType: CT, expiresIn: ONE_YEAR,
+    attributes: attrs({ app: APP, kind: &quot;escalation&quot;, defectId, assetId, severityTier, escalatedTs: now() }),
+  });
+}
+
+// ---------- 8. resale: the machine changes hands, the history does not ----------
+export async function sell(w: Wal, assetKey: Hex, buyer: Hex) {
+  return w.changeOwnership({ entityKey: assetKey, newOwner: buyer });   // $owner moves; every cert keeps its creator
+}
+
+// ---------- 9. keep the statutory record alive with the asset — ONE atomic tx ----------
+export async function renewAsset(w: Wal, assetKey: Hex, examRecordKeys: Hex[]) {
+  return w.mutateEntities({
+    extensions: [{ entityKey: assetKey, expiresIn: TWO_YEARS },
+                 ...examRecordKeys.map(entityKey =&gt; ({ entityKey, expiresIn: EXAM_RECORD_SEC }))],
+  });                                                     // ≤1000 ops per tx; chunk beyond that
+}
+
+// ---------- 10. what the register said at block N — the after-accident question ----------
+// validAtBlock() exists on the builder. Whether expired entities are served at a past block is not
+// documented; treated as the upgrade path for investigations, not as a current guarantee.
+export async function registerAtBlock(p: Pub, assetId: string, block: bigint) {
+  return (await p.select({ key: true, creator: true, attributes: true })
+    .where(eq(&quot;app&quot;, APP), eq(&quot;kind&quot;, &quot;cert&quot;), eq(&quot;assetId&quot;, assetId))
+    .validAtBlock(block).limit(PAGE).fetch()).entities;
+}
+</code></pre>
+    </details>
+  </section>
+
+  <hr>
+
+
+  <section class="col" style="max-width: 100%;">
+    <h2>The sketch is executed, not just compiled</h2>
+    <p class="lede" style="font-size: 1rem;">The sketch code above runs, unchanged, against <code>MemArkiv</code> &mdash; an executable specification of the twelve Arkiv rules this design depends on, each cited to the SDK source or the fundamentals. It is not Arkiv and claims nothing about performance; it is the referee for the design&rsquo;s <em>logic</em>. Nine LAYAK invariants, all passing, offline, in under a second. The first run of one of them failed because the <em>test</em> was wrong and the design was right; that is left in as a comment.</p>
+    <details style="background: var(--surface); border: 1px solid var(--rule); padding: 1rem 1.25rem;">
+      <summary style="cursor: pointer; font-weight: 600;">invariants.test.ts &mdash; click to expand</summary>
+      <pre style="overflow-x: auto; font-size: 0.78rem; line-height: 1.5; margin: 1rem 0 0; padding: 0; background: transparent;"><code>// Executable invariants for LAYAK and SELISIH — runs the real sketch code (type-checked against
+// @arkiv-network/sdk@0.7.0) against MemArkiv, an executable spec of the documented semantics.
+// Run: node --test dist/invariants.test.js   (after tsc). Nothing here touches a network.
+import { test } from &quot;node:test&quot;;
+import assert from &quot;node:assert/strict&quot;;
+import { MemArkiv, NotOwnerError, InvalidExpirationError } from &quot;./memarkiv.js&quot;;
+import * as L from &quot;../layak.sketch.js&quot;;
+import * as S from &quot;../selisih.sketch.js&quot;;
+import type { Hex } from &quot;viem&quot;;
+
+const INSPECTOR = &quot;0x1111111111111111111111111111111111111111&quot; as Hex;
+const CONTRACTOR = &quot;0x2222222222222222222222222222222222222222&quot; as Hex;
+const BUYER      = &quot;0x3333333333333333333333333333333333333333&quot; as Hex;
+const W = (n: number) =&gt; (&quot;0x&quot; + String(n).repeat(40)) as Hex;
+const any = (x: unknown) =&gt; x as any;   // MemArkiv is structurally the surface the sketches use; the SDK&#x27;s client type is a viem client
+
+// ============================== LAYAK ==============================
+
+test(&quot;LAYAK-1: an expired certificate is not returned — with no date filter anywhere&quot;, async () =&gt; {
+  const db = new MemArkiv(INSPECTOR);
+  await L.recordExamination(any(db), { assetId: &quot;A-4471&quot;, siteId: &quot;S1&quot;, certType: &quot;SLO-angkat&quot;, bodyId: &quot;PJK3-7&quot;, examRecordId: &quot;E1&quot;, regimeCode: 2, outcomeCode: 0, defectCount: 0, testRatioBps: 12500, reportHash: &quot;0xabc&quot; });
+  // First run of this test expected RED here and FAILED: the sketch returns AMBER — certified, but no Asset entity
+  // claims responsibility. That is the designed behaviour (§9, orphaned certificate); the test expectation was wrong.
+  assert.equal((await L.gateCheck(any(db), &quot;A-4471&quot;, &quot;SLO-angkat&quot;)).code, &quot;AMBER_UNCLAIMED&quot;, &quot;certified but unclaimed → amber, never green&quot;);
+  db.createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 63_072_000, attributes: [{ key: &quot;app&quot;, value: &quot;layak&quot; }, { key: &quot;kind&quot;, value: &quot;asset&quot; }, { key: &quot;assetId&quot;, value: &quot;A-4471&quot; }] });
+  assert.equal((await L.gateCheck(any(db), &quot;A-4471&quot;, &quot;SLO-angkat&quot;)).code, &quot;GREEN&quot;);
+  db.advanceSeconds(31_536_000 + 2);                                     // one year + one block
+  assert.equal((await L.gateCheck(any(db), &quot;A-4471&quot;, &quot;SLO-angkat&quot;)).code, &quot;RED_NO_CERT&quot;, &quot;lifetime lapsed → the row no longer exists to be returned&quot;);
+  assert.ok(db.events.some(e =&gt; e.name === &quot;ArkivEntityExpired&quot;), &quot;expiry is an on-chain event, not a silent row state&quot;);
+});
+
+test(&quot;LAYAK-2: a FAILED exam writes the statutory record and NO certificate, atomically&quot;, async () =&gt; {
+  const db = new MemArkiv(INSPECTOR);
+  const r = await L.recordExamination(any(db), { assetId: &quot;A-9&quot;, siteId: &quot;S1&quot;, certType: &quot;SLO-angkat&quot;, bodyId: &quot;B&quot;, examRecordId: &quot;E9&quot;, regimeCode: 2, outcomeCode: 2, defectCount: 3, testRatioBps: 12500, reportHash: &quot;0x&quot; });
+  assert.equal(r.createdEntities.length, 1);
+  const exams = await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;exam&quot; }).fetch();
+  const certs = await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;cert&quot; }).fetch();
+  assert.equal(exams.entities.length, 1); assert.equal(certs.entities.length, 0);
+  assert.equal((await L.gateCheck(any(db), &quot;A-9&quot;, &quot;SLO-angkat&quot;)).code, &quot;RED_NO_CERT&quot;, &quot;absence is the fail state — the same absence as expiry&quot;);
+});
+
+test(&quot;LAYAK-3: the record outlives the certificate; the two lifetimes are opposite&quot;, async () =&gt; {
+  const db = new MemArkiv(INSPECTOR);
+  await L.recordExamination(any(db), { assetId: &quot;A-1&quot;, siteId: &quot;S1&quot;, certType: &quot;SLO-angkat&quot;, bodyId: &quot;B&quot;, examRecordId: &quot;E1&quot;, regimeCode: 2, outcomeCode: 0, defectCount: 0, testRatioBps: 12500, reportHash: &quot;0x&quot; });
+  db.advanceSeconds(31_536_000 + 2);
+  const certs = await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;cert&quot; }).fetch();
+  const exams = await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;exam&quot; }).fetch();
+  assert.equal(certs.entities.length, 0, &quot;certificate gone&quot;);
+  assert.equal(exams.entities.length, 1, &quot;statutory record still served — LOLER/riksa uji retention duty&quot;);
+});
+
+test(&quot;LAYAK-4: only the owner can extend — and an owner extending a cert is CAUGHT by Q8&quot;, async () =&gt; {
+  const db = new MemArkiv(INSPECTOR);
+  await L.recordExamination(any(db), { assetId: &quot;A-1&quot;, siteId: &quot;S1&quot;, certType: &quot;SLO-angkat&quot;, bodyId: &quot;B&quot;, examRecordId: &quot;E1&quot;, regimeCode: 2, outcomeCode: 0, defectCount: 0, testRatioBps: 12500, reportHash: &quot;0x&quot; });
+  const cert = (await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;cert&quot; }).fetch()).entities[0];
+  await assert.rejects(async () =&gt; db.as(CONTRACTOR).extendEntity({ entityKey: cert.key, expiresIn: 63_072_000 }), NotOwnerError, &quot;the contractor cannot extend a certificate it does not own&quot;);
+  assert.deepEqual(await L.extensionAnomalies(any(db), &quot;A-1&quot;), [], &quot;clean before&quot;);
+  // the corrupt inspector CAN extend their own entity — the protocol allows it (R3) — but cannot do it in secret:
+  db.extendEntity({ entityKey: cert.key, expiresIn: 63_072_000 });
+  // the mirrored expiresAtTs must be rewritten for the extension to be useful on the renewal queue; a forger updating it exposes the lie
+  db.updateEntity({ entityKey: cert.key, payload: cert.payload, contentType: cert.contentType, expiresIn: 63_072_000,
+    attributes: cert.attributes.map(a =&gt; a.key === &quot;expiresAtTs&quot; ? { key: a.key, value: (a.value as number) + 31_536_000 } : a) });
+  assert.deepEqual(await L.extensionAnomalies(any(db), &quot;A-1&quot;), [&quot;E1&quot;], &quot;certificate living longer than its own examination justifies → flagged, by anyone, without permission&quot;);
+});
+
+test(&quot;LAYAK-5: a live certificate with a lapsed Asset is AMBER, not GREEN&quot;, async () =&gt; {
+  const db = new MemArkiv(INSPECTOR);
+  db.createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 60, attributes: [{ key: &quot;app&quot;, value: &quot;layak&quot; }, { key: &quot;kind&quot;, value: &quot;asset&quot; }, { key: &quot;assetId&quot;, value: &quot;A-1&quot; }] });
+  await L.recordExamination(any(db), { assetId: &quot;A-1&quot;, siteId: &quot;S1&quot;, certType: &quot;SLO-angkat&quot;, bodyId: &quot;B&quot;, examRecordId: &quot;E1&quot;, regimeCode: 2, outcomeCode: 0, defectCount: 0, testRatioBps: 12500, reportHash: &quot;0x&quot; });
+  assert.equal((await L.gateCheck(any(db), &quot;A-1&quot;, &quot;SLO-angkat&quot;)).code, &quot;GREEN&quot;);
+  db.advanceSeconds(62);
+  assert.equal((await L.gateCheck(any(db), &quot;A-1&quot;, &quot;SLO-angkat&quot;)).code, &quot;AMBER_UNCLAIMED&quot;, &quot;certified, but nobody is renewing responsibility for the machine&quot;);
+});
+
+test(&quot;LAYAK-6: a Prohibition turns the gate red without touching the certificate (no triggers exist)&quot;, async () =&gt; {
+  const db = new MemArkiv(INSPECTOR);
+  db.createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 63_072_000, attributes: [{ key: &quot;app&quot;, value: &quot;layak&quot; }, { key: &quot;kind&quot;, value: &quot;asset&quot; }, { key: &quot;assetId&quot;, value: &quot;A-1&quot; }] });
+  await L.recordExamination(any(db), { assetId: &quot;A-1&quot;, siteId: &quot;S1&quot;, certType: &quot;SLO-angkat&quot;, bodyId: &quot;B&quot;, examRecordId: &quot;E1&quot;, regimeCode: 2, outcomeCode: 0, defectCount: 0, testRatioBps: 12500, reportHash: &quot;0x&quot; });
+  const pro = db.createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 86_400, attributes: [{ key: &quot;app&quot;, value: &quot;layak&quot; }, { key: &quot;kind&quot;, value: &quot;prohibition&quot; }, { key: &quot;assetId&quot;, value: &quot;A-1&quot; }] });
+  assert.equal((await L.gateCheck(any(db), &quot;A-1&quot;, &quot;SLO-angkat&quot;)).code, &quot;RED_PROHIBITION&quot;);
+  db.advanceSeconds(86_402);                                              // prohibition lapses (or the inspector lifts it) → green again, cert untouched
+  assert.equal((await L.gateCheck(any(db), &quot;A-1&quot;, &quot;SLO-angkat&quot;)).code, &quot;GREEN&quot;);
+  assert.ok(pro.entityKey);
+});
+
+test(&quot;LAYAK-7: resale moves $owner and keeps $creator on every certificate&quot;, async () =&gt; {
+  const db = new MemArkiv(INSPECTOR);
+  const asset = db.as(CONTRACTOR).createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 63_072_000, attributes: [{ key: &quot;app&quot;, value: &quot;layak&quot; }, { key: &quot;kind&quot;, value: &quot;asset&quot; }, { key: &quot;assetId&quot;, value: &quot;A-1&quot; }] });
+  await L.recordExamination(any(db), { assetId: &quot;A-1&quot;, siteId: &quot;S1&quot;, certType: &quot;SLO-angkat&quot;, bodyId: &quot;B&quot;, examRecordId: &quot;E1&quot;, regimeCode: 2, outcomeCode: 1, defectCount: 2, testRatioBps: 12500, reportHash: &quot;0x&quot; });
+  await L.sell(any(db.as(CONTRACTOR)), asset.entityKey, BUYER);
+  const a = (await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;asset&quot; }).fetch()).entities[0];
+  const e = (await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;exam&quot; }).fetch()).entities[0];
+  assert.equal(a.owner, BUYER); assert.equal(a.creator, CONTRACTOR); assert.equal(e.creator, INSPECTOR, &quot;the past was never the seller&#x27;s to leave behind&quot;);
+});
+
+test(&quot;LAYAK-8: .count() is one page — complianceGap sums pages, so 350 assets are 350, not 200&quot;, async () =&gt; {
+  const db = new MemArkiv(CONTRACTOR);
+  for (let i = 0; i &lt; 350; i++) db.createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 63_072_000, attributes: [{ key: &quot;app&quot;, value: &quot;layak&quot; }, { key: &quot;kind&quot;, value: &quot;asset&quot; }, { key: &quot;assetId&quot;, value: &quot;A-&quot; + i }, { key: &quot;siteId&quot;, value: &quot;S1&quot; }] });
+  const naive = await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;asset&quot; }).limit(200).count();
+  assert.equal(naive, 200, &quot;the naive count the first draft relied on&quot;);
+  const gap = await L.complianceGap(any(db), &quot;S1&quot;, &quot;SLO-angkat&quot;);
+  assert.equal(gap.assets, 350); assert.equal(gap.gap, 350);
+});
+
+test(&quot;LAYAK-9: an odd expiresIn is rejected (2-second blocks)&quot;, () =&gt; {
+  const db = new MemArkiv(INSPECTOR);
+  assert.throws(() =&gt; db.createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 31_536_001, attributes: [] }), InvalidExpirationError);
+});
+
+// ============================== SELISIH ==============================
+
+const snap = (round: number, hf: number, tier: 0|1|2|3|4 = 0) =&gt; ({ market: &quot;aave-v3-eth-wsteth&quot;, round, blockNumber: 20_459_000, observedTs: 1_722_800_000, priceE8: 213_928_000_000, healthFactorBps: hf, totalDebtE6: 1, collateralE6: 1, atRiskCount: 0, deviationBps: 0, severityTier: tier, sourceHash: &quot;0x&quot;, salt: &quot;s&quot; });
+
+test(&quot;SELISIH-1: divergence board returns a SET per round, one row per witness, outlier attributable by creator&quot;, async () =&gt; {
+  const db = new MemArkiv(W(1));
+  for (const [w, hf] of [[1, 10420], [2, 10420], [3, 10420], [4, 9980], [5, 10420]] as const) {
+    await S.reveal(any(db.as(W(w))), snap(812, hf, w === 4 ? 4 : 0), []);
+    db.as(W(w)).createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 604_800, attributes: [{ key: &quot;app&quot;, value: &quot;selisih&quot; }, { key: &quot;kind&quot;, value: &quot;witness&quot; }, { key: &quot;market&quot;, value: &quot;aave-v3-eth-wsteth&quot; }] });
+  }
+  db.as(W(7)).createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 604_800, attributes: [{ key: &quot;app&quot;, value: &quot;selisih&quot; }, { key: &quot;kind&quot;, value: &quot;witness&quot; }, { key: &quot;market&quot;, value: &quot;aave-v3-eth-wsteth&quot; }] });
+  const d = await S.divergence(any(db), &quot;aave-v3-eth-wsteth&quot;, 812);
+  assert.equal(d.rows.length, 5); assert.equal(d.median, 10420); assert.equal(d.missing, 1, &quot;6 registered, 5 reported → w7 is the interesting row&quot;);
+  const outlier = d.rows.find(r =&gt; r.attributes.some(a =&gt; a.key === &quot;healthFactorBps&quot; &amp;&amp; a.value === 9980));
+  assert.equal(outlier?.creator, W(4), &quot;the outlier is named, not anonymised into an error bar&quot;);
+});
+
+test(&quot;SELISIH-2: a correction is a NEW entity; the board shows originals only via not(supersedesRound)&quot;, async () =&gt; {
+  const db = new MemArkiv(W(1));
+  await S.reveal(any(db), snap(812, 10420), []);
+  await S.reveal(any(db), { ...snap(812, 10300), supersedesRound: 812 }, []);
+  const d = await S.divergence(any(db), &quot;aave-v3-eth-wsteth&quot;, 812);
+  assert.equal(d.rows.length, 1); assert.equal(d.median, 10420, &quot;the original is never silently edited; the correction sits beside it&quot;);
+  const all = await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;snapshot&quot; }).fetch();
+  assert.equal(all.entities.length, 2);
+});
+
+test(&quot;SELISIH-3: only the owner may extend — a disputant CANNOT preserve a witness&#x27;s reading; a pin can&quot;, async () =&gt; {
+  const db = new MemArkiv(W(1));
+  const { entityKey } = await S.reveal(any(db), snap(812, 9980, 4), [], 3);     // 72h floor
+  await assert.rejects(async () =&gt; db.as(W(9)).extendEntity({ entityKey, expiresIn: 7_776_000 }), NotOwnerError);
+  const original = (await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;snapshot&quot; }).fetch()).entities[0];
+  await S.pin(any(db.as(W(9))), { attributes: original.attributes, creator: original.creator, payload: original.payload }, entityKey, 31_536_000);
+  db.advanceSeconds(259_200 + 2);                                                 // the original lapses
+  const snaps = await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;snapshot&quot; }).fetch();
+  const pins  = await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;pin&quot; }).fetch();
+  assert.equal(snaps.entities.length, 0, &quot;the witness&#x27;s reading left the query surface&quot;);
+  assert.equal(pins.entities.length, 1); assert.equal(pins.entities[0].creator, W(9), &quot;the pin is the reader&#x27;s own entity, funded by the reader, carrying the original tx hash&quot;);
+  assert.equal(pins.entities[0].attributes.find(a =&gt; a.key === &quot;originTxHash&quot;)?.value, entityKey);
+});
+
+test(&quot;SELISIH-4: conviction is a receipt — cost in ArkivEntityCreated scales with the funded lifetime&quot;, async () =&gt; {
+  const db = new MemArkiv(W(1));
+  await S.reveal(any(db), snap(812, 10420), [], 3);
+  await S.reveal(any(db), snap(813, 10420), [], 90);
+  const [c3, c90] = db.events.filter(e =&gt; e.name === &quot;ArkivEntityCreated&quot;).map(e =&gt; (e as any).cost as bigint);
+  assert.ok(c90 &gt; c3 * 20n, `90-day funding costs ${c90} vs 3-day ${c3}: fundedDays is checkable against what was actually paid`);
+});
+
+test(&quot;SELISIH-5: pinQueue lists readings that will lapse BEFORE the dispute deadline&quot;, async () =&gt; {
+  const db = new MemArkiv(W(1));
+  await S.reveal(any(db), snap(812, 10420), [], 3);        // lapses in 72h
+  await S.reveal(any(db), snap(813, 10420), [], 30);       // funded past the deadline
+  const deadline = db.nowUnix() + 7 * 86_400;
+  const q = await S.pinQueue(any(db), &quot;aave-v3-eth-wsteth&quot;, 800, 900, deadline);
+  assert.equal(q.length, 1); assert.equal(q[0].attributes.find(a =&gt; a.key === &quot;round&quot;)?.value, 812);
+});
+
+test(&quot;SELISIH-6: silence is an event — a witness that stops renewing emits ArkivEntityExpired under its own key&quot;, async () =&gt; {
+  const db = new MemArkiv(W(4));
+  const reg = db.createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 604_800, attributes: [{ key: &quot;app&quot;, value: &quot;selisih&quot; }, { key: &quot;kind&quot;, value: &quot;witness&quot; }, { key: &quot;market&quot;, value: &quot;m&quot; }] });
+  await S.heartbeat(any(db), reg.entityKey); db.advanceSeconds(604_800 - 100);
+  assert.equal(db.events.filter(e =&gt; e.name === &quot;ArkivEntityExpired&quot;).length, 0, &quot;renewed → still live&quot;);
+  db.advanceSeconds(200);
+  const ev = db.events.find(e =&gt; e.name === &quot;ArkivEntityExpired&quot;) as any;
+  assert.equal(ev?.owner, W(4), &quot;leaving is a log entry with your key on it&quot;);
+});
+
+test(&quot;SELISIH-7: track record uses createdBy natively — no mirrored witness attribute exists in the schema&quot;, async () =&gt; {
+  const db = new MemArkiv(W(4));
+  await S.reveal(any(db), snap(1, 9000, 4), []); await S.reveal(any(db), snap(2, 9000, 3), []); await S.reveal(any(db), snap(3, 10420, 0), []);
+  db.as(W(8)).createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 86_400, attributes: [{ key: &quot;app&quot;, value: &quot;selisih&quot; }, { key: &quot;kind&quot;, value: &quot;resolution&quot; }, { key: &quot;vindicatedWitness&quot;, value: W(4) }] });
+  const tr = await S.trackRecord(any(db), W(4));
+  assert.deepEqual(tr, { broke: 2, vindicated: 1 });
+  const s = (await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;snapshot&quot; }).fetch()).entities[0];
+  assert.ok(!s.attributes.some(a =&gt; a.key === &quot;witness&quot;), &quot;$creator is metadata, not an attribute to mirror&quot;);
+});
+
+test(&quot;SELISIH-8: RosterEpoch answers &#x27;who was expected&#x27; after registrations have expired&quot;, async () =&gt; {
+  const db = new MemArkiv(W(1));
+  for (const w of [1, 2, 3]) db.as(W(w)).createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 604_800, attributes: [{ key: &quot;app&quot;, value: &quot;selisih&quot; }, { key: &quot;kind&quot;, value: &quot;witness&quot; }, { key: &quot;market&quot;, value: &quot;m&quot; }] });
+  await S.rosterEpoch(any(db), &quot;m&quot;, 1, 800, 900, [W(1), W(2), W(3)]);
+  const atRound = db.block;
+  db.advanceSeconds(30 * 86_400);                                                 // a month into a dispute: registrations long gone
+  const live = await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;witness&quot; }).count();
+  assert.equal(live, 0, &quot;querying live registrations now answers WRONG with total confidence&quot;);
+  const epoch = (await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;roster&quot; }, { type: &quot;lte&quot;, key: &quot;roundFrom&quot;, value: 812 }, { type: &quot;gte&quot;, key: &quot;roundTo&quot;, value: 812 }).fetch()).entities[0];
+  assert.equal(epoch.attributes.find(a =&gt; a.key === &quot;witnessCount&quot;)?.value, 3, &quot;the fact was stored while it was true&quot;);
+  // and the upgrade path: validAtBlock() — if the network serves history, this replaces RosterEpoch
+  assert.equal((await S.rosterAtBlock(any(db), &quot;m&quot;, atRound)).length, 3);
+});
+</code></pre>
+    </details>
+    <details style="background: var(--surface); border: 1px solid var(--rule); padding: 1rem 1.25rem; margin-top: 0.75rem;">
+      <summary style="cursor: pointer; font-weight: 600;">memarkiv.ts &mdash; the executable spec, with every rule cited</summary>
+      <pre style="overflow-x: auto; font-size: 0.78rem; line-height: 1.5; margin: 1rem 0 0; padding: 0; background: transparent;"><code>// MemArkiv — an executable specification of the Arkiv semantics this design depends on.
+// NOT Arkiv, and not a substitute for it. Every rule below is cited to the published SDK source
+// (@arkiv-network/sdk@0.7.0) or the arkiv-fundamentals doc, so that the sketches — which already
+// type-check against the real package — can be EXECUTED and their invariants asserted, offline.
+//
+//  R1  expiresIn is seconds; lifetimes are 2-second blocks (utils/expirationTime.ts, consts BLOCK_TIME=2)
+//  R2  an expired entity leaves the query surface (fundamentals: &quot;drops off the query surface&quot;)
+//  R3  only the owner may update / delete / extend (ideation-guide §4)
+//  R4  updateEntity is a full replace (fundamentals: &quot;An attribute you omit ... is silently removed&quot;)
+//  R5  $creator is immutable; $owner moves via changeOwnership (types/entity.ts, actions/wallet/changeOwnership.ts)
+//  R6  results are newest-first; no server-side ordering (docs: &quot;always returns matching entities newest first&quot;)
+//  R7  string attributes support eq() only; range ops on numerics (fundamentals + query/predicate.ts)
+//  R8  not(key) = attribute absent; neq = not equal (query/predicate.ts)
+//  R9  .count() = length of ONE page, limit ≤ 200 (query/queryBuilder.ts count(): queryResult.data.length)
+//  R10 mutateEntities is one atomic transaction (actions/wallet/mutateEntities.ts: single sendArkivTransaction)
+//  R11 ArkivEntityCreated(..., cost) / ArkivEntityExpired / ArkivEntityBTLExtended(..., cost) are emitted
+//      (actions/public/subscribeEntityEvents.ts arkivABI); cost ∝ size × lifetime (fundamentals)
+//  R12 createdAtBlock / expiresAtBlock / creator / owner are returned as metadata (types/entity.ts)
+
+import type { Attribute } from &quot;@arkiv-network/sdk&quot;;
+import type { Predicate } from &quot;@arkiv-network/sdk/query&quot;;
+import type { Hex } from &quot;viem&quot;;
+
+export const BLOCK_TIME = 2;
+const PAGE_MAX = 200;
+
+type Row = {
+  key: Hex; creator: Hex; owner: Hex; payload: Uint8Array; contentType: string;
+  attributes: Attribute[]; createdAtBlock: bigint; expiresAtBlock: bigint; lastModifiedAtBlock: bigint; seq: number;
+};
+export type Event =
+  | { name: &quot;ArkivEntityCreated&quot;; entityKey: Hex; owner: Hex; expirationBlock: bigint; cost: bigint }
+  | { name: &quot;ArkivEntityBTLExtended&quot;; entityKey: Hex; owner: Hex; oldExpirationBlock: bigint; newExpirationBlock: bigint; cost: bigint }
+  | { name: &quot;ArkivEntityExpired&quot;; entityKey: Hex; owner: Hex }
+  | { name: &quot;ArkivEntityOwnerChanged&quot;; entityKey: Hex; oldOwner: Hex; newOwner: Hex };
+
+export class NotOwnerError extends Error {}
+export class InvalidExpirationError extends Error {}
+
+// One shared store per chain; `as(signer)` returns a view over the SAME store with a different wallet.
+type Store = { block: bigint; seq: number; rows: Map&lt;Hex, Row&gt;; events: Event[]; genesisUnix: number };
+
+export class MemArkiv {
+  private st: Store;
+  constructor(public signer: Hex, st?: Store) {
+    // genesis chosen so that chain time ≈ wall-clock at construction: the sketches stamp `now()` from Date.now()
+    this.st = st ?? { block: 1000n, seq: 0, rows: new Map(), events: [], genesisUnix: Math.floor(Date.now() / 1000) - 1000 * BLOCK_TIME };
+  }
+  as(signer: Hex) { return new MemArkiv(signer, this.st); }
+  get block() { return this.st.block; }
+  get rows() { return this.st.rows; }
+  get events() { return this.st.events; }
+
+  // ---- time ----
+  advanceSeconds(s: number) {
+    this.st.block += BigInt(Math.ceil(s / BLOCK_TIME));
+    for (const r of this.rows.values())                                                  // R2 + R11
+      if (r.expiresAtBlock &lt;= this.block &amp;&amp; !r.attributes.some(a =&gt; a.key === &quot;__expired&quot;)) {
+        r.attributes.push({ key: &quot;__expired&quot;, value: 1 });
+        this.events.push({ name: &quot;ArkivEntityExpired&quot;, entityKey: r.key, owner: r.owner });
+      }
+  }
+  blockToUnix(b: bigint) { return this.st.genesisUnix + Number(b) * BLOCK_TIME; }
+  nowUnix() { return this.blockToUnix(this.block); }
+
+  // ---- wallet actions (same parameter shapes as the SDK) ----
+  private cost(payload: Uint8Array, attributes: Attribute[], expiresIn: number) {
+    const bytes = payload.length + JSON.stringify(attributes).length;
+    return BigInt(bytes) * BigInt(Math.ceil(expiresIn / BLOCK_TIME));                  // R11: size × lifetime
+  }
+  createEntity(p: { payload: Uint8Array; attributes: Attribute[]; contentType: string; expiresIn: number }) {
+    if (!Number.isInteger(p.expiresIn) || p.expiresIn &lt;= 0 || p.expiresIn % 2 !== 0) throw new InvalidExpirationError(String(p.expiresIn)); // R1
+    const seq = ++this.st.seq;
+    const key = (&quot;0x&quot; + seq.toString(16).padStart(64, &quot;0&quot;)) as Hex;
+    const exp = this.block + BigInt(p.expiresIn / BLOCK_TIME);
+    this.rows.set(key, { key, creator: this.signer, owner: this.signer, payload: p.payload, contentType: p.contentType,
+      attributes: [...p.attributes], createdAtBlock: this.block, expiresAtBlock: exp, lastModifiedAtBlock: this.block, seq });
+    const cost = this.cost(p.payload, p.attributes, p.expiresIn);
+    this.events.push({ name: &quot;ArkivEntityCreated&quot;, entityKey: key, owner: this.signer, expirationBlock: exp, cost });
+    return { entityKey: key, txHash: (&quot;0x&quot; + &quot;t&quot;.repeat(0) + key.slice(2)) as Hex };
+  }
+  private own(key: Hex) { const r = this.rows.get(key); if (!r) throw new Error(&quot;no such entity&quot;); if (r.owner !== this.signer) throw new NotOwnerError(key); return r; } // R3
+  extendEntity(p: { entityKey: Hex; expiresIn: number }) {
+    const r = this.own(p.entityKey); const old = r.expiresAtBlock;
+    r.expiresAtBlock = this.block + BigInt(p.expiresIn / BLOCK_TIME); r.lastModifiedAtBlock = this.block;
+    this.events.push({ name: &quot;ArkivEntityBTLExtended&quot;, entityKey: r.key, owner: r.owner, oldExpirationBlock: old, newExpirationBlock: r.expiresAtBlock, cost: this.cost(r.payload, r.attributes, p.expiresIn) });
+    return { entityKey: r.key, txHash: r.key };
+  }
+  updateEntity(p: { entityKey: Hex; payload: Uint8Array; attributes: Attribute[]; contentType: string; expiresIn: number }) {
+    const r = this.own(p.entityKey);                                                     // R4: full replace
+    r.payload = p.payload; r.attributes = [...p.attributes]; r.contentType = p.contentType;
+    r.expiresAtBlock = this.block + BigInt(p.expiresIn / BLOCK_TIME); r.lastModifiedAtBlock = this.block;
+    return { entityKey: r.key, txHash: r.key };
+  }
+  deleteEntity(p: { entityKey: Hex }) { this.own(p.entityKey); this.rows.delete(p.entityKey); return { entityKey: p.entityKey, txHash: p.entityKey }; }
+  changeOwnership(p: { entityKey: Hex; newOwner: Hex }) {
+    const r = this.own(p.entityKey); const old = r.owner; r.owner = p.newOwner;         // R5: creator untouched
+    this.events.push({ name: &quot;ArkivEntityOwnerChanged&quot;, entityKey: r.key, oldOwner: old, newOwner: p.newOwner });
+    return { entityKey: r.key, txHash: r.key };
+  }
+  mutateEntities(p: { creates?: Parameters&lt;MemArkiv[&quot;createEntity&quot;]&gt;[0][]; extensions?: Parameters&lt;MemArkiv[&quot;extendEntity&quot;]&gt;[0][];
+                      ownershipChanges?: Parameters&lt;MemArkiv[&quot;changeOwnership&quot;]&gt;[0][]; deletes?: { entityKey: Hex }[] }) {
+    // R10: atomic — validate ownership/expiry for every op BEFORE applying any
+    for (const e of p.extensions ?? []) this.own(e.entityKey);
+    for (const o of p.ownershipChanges ?? []) this.own(o.entityKey);
+    for (const d of p.deletes ?? []) this.own(d.entityKey);
+    for (const c of p.creates ?? []) if (c.expiresIn % 2 !== 0 || c.expiresIn &lt;= 0) throw new InvalidExpirationError(String(c.expiresIn));
+    const createdEntities = (p.creates ?? []).map(c =&gt; this.createEntity(c).entityKey);
+    const extendedEntities = (p.extensions ?? []).map(e =&gt; this.extendEntity(e).entityKey);
+    const ownershipChanges = (p.ownershipChanges ?? []).map(o =&gt; this.changeOwnership(o).entityKey);
+    const deletedEntities = (p.deletes ?? []).map(d =&gt; this.deleteEntity(d).entityKey);
+    return { txHash: &quot;0xbatch&quot; as Hex, createdEntities, updatedEntities: [] as Hex[], deletedEntities, extendedEntities, ownershipChanges };
+  }
+
+  // ---- public query surface (same chain shape as the SDK builder) ----
+  select(_fields?: unknown) { return new MemQuery(this); }
+}
+
+function matches(r: Row, p: Predicate): boolean {
+  if (p.type === &quot;and&quot;) return p.predicates.every(q =&gt; matches(r, q));
+  if (p.type === &quot;or&quot;) return p.predicates.some(q =&gt; matches(r, q));
+  const lp = p as Extract&lt;Predicate, { key: string }&gt;;
+  const a = r.attributes.find(x =&gt; x.key === lp.key);
+  if (lp.type === &quot;not&quot;) return a === undefined;                                         // R8
+  if (a === undefined) return false;
+  const v = a.value;
+  switch (lp.type) {
+    case &quot;eq&quot;: return v === lp.value;
+    case &quot;neq&quot;: return v !== lp.value;
+    default:
+      if (typeof v !== &quot;number&quot; || typeof lp.value !== &quot;number&quot;) return false;           // R7: ranges on numerics only
+      return lp.type === &quot;gt&quot; ? v &gt; lp.value : lp.type === &quot;gte&quot; ? v &gt;= lp.value : lp.type === &quot;lt&quot; ? v &lt; lp.value : v &lt;= lp.value;
+  }
+}
+
+export class MemQuery {
+  private preds: Predicate[] = []; private _limit = PAGE_MAX; private _offset = 0; private _creator?: Hex; private _owner?: Hex; private _at?: bigint;
+  constructor(private db: MemArkiv) {}
+  where(...ps: (Predicate | Predicate[])[]) { this.preds.push(...ps.flat()); return this; }
+  createdBy(h: Hex) { this._creator = h; return this; }
+  ownedBy(h: Hex) { this._owner = h; return this; }
+  limit(n: number) { this._limit = Math.min(n, PAGE_MAX); return this; }
+  validAtBlock(_b: bigint) { this._at = _b; return this; }
+  private all() {
+    const at = this._at ?? this.db.block;
+    return [...this.db.rows.values()]
+      .filter(r =&gt; r.createdAtBlock &lt;= at &amp;&amp; r.expiresAtBlock &gt; at)                     // R2 (validAtBlock reads history in the spec; see design note)
+      .filter(r =&gt; (!this._creator || r.creator === this._creator) &amp;&amp; (!this._owner || r.owner === this._owner))
+      .filter(r =&gt; this.preds.every(p =&gt; matches(r, p)))
+      .sort((a, b) =&gt; b.seq - a.seq);                                                    // R6: newest-first, nothing else
+  }
+  async fetch() {
+    const rows = this.all(); const page = rows.slice(this._offset, this._offset + this._limit);
+    const entities = page.map(r =&gt; ({ key: r.key, creator: r.creator, owner: r.owner, payload: r.payload, contentType: r.contentType,
+      attributes: r.attributes.filter(a =&gt; a.key !== &quot;__expired&quot;), createdAtBlock: r.createdAtBlock, expiresAtBlock: r.expiresAtBlock, lastModifiedAtBlock: r.lastModifiedAtBlock })); // R12
+    const self = this;
+    const res = {
+      entities,
+      hasNextPage: () =&gt; self._offset + self._limit &lt; rows.length,
+      async next() { self._offset += self._limit; const n = await self.fetch(); res.entities = n.entities; res.hasNextPage = n.hasNextPage; },
+    };
+    return res;
+  }
+  async count() { return (await this.fetch()).entities.length; }                        // R9: ONE page, not a total
+}
+</code></pre>
+    </details>
+  </section>
+
+  <hr>
+
+
+  <section class="col" style="max-width: 100%;">
+    <h2>And against what comes next: <code>0.8.0-dev</code></h2>
+    <p class="lede" style="font-size: 1rem;">The September testnet runs a rebuilt architecture, and its SDK is already on npm under the <code>dev</code> tag. It does not invalidate this design; it makes it smaller, and it confirms one piece of feedback.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>On 0.7.0</th><th>On 0.8.0-dev</th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td><code>expiresAtTs</code> mirrored for the renewal queue</td><td><code>$expiresAt</code> is a <b>queryable system attribute</b></td><td>The mirror disappears; <code>$expiresAt &lt; now+7d</code> is native</td></tr>
+        <tr><td><code>testRatioBps = 12500</code></td><td><code>dec</code> stores 18 fractional digits exactly</td><td><code>dec("1.25")</code>. Same query, no scaling convention</td></tr>
+        <tr><td>ids and addresses as strings</td><td><code>key</code> and <code>addr</code> attribute types</td><td>Relationships become typed references</td></tr>
+        <tr><td>validity as seconds from now</td><td><code>ExpirationTime.atDate(date, { atLeast })</code></td><td><b>A certificate&rsquo;s expiry is literally the date on the report.</b> The core idea gets a first-class primitive</td></tr>
+        <tr><td><code>updateEntity</code> is a full replace</td><td><code>patchEntity</code> with <code>set</code> / <code>unset</code></td><td>The trap is gone; certificates stay append-only anyway &mdash; an evidence decision, not a workaround</td></tr>
+        <tr><td>no prefix search</td><td><code>startsWith</code> on strings</td><td>A yard&rsquo;s fleet by asset-id prefix in one query</td></tr>
+        <tr><td class="hit"><code>createdAtBlock</code> returned, not filterable</td><td class="hit"><code>$createdAt</code> is still <b>result-only</b></td><td class="hit">Protocol feedback #1 stands: backdating is a per-entity check, not a sweep</td></tr>
+      </tbody></table></div>
+  </section>
+
+  <hr>
+
+  <section class="col">
+    <h2>The weekend slice</h2>
+    <p>One asset class, one certificate type, one screen and one phone. An inspector writes a certificate and its examination record in a single batch, with <code>expiresIn</code> set to the validity period. A site supervisor scans the QR code and gets green with the inspector&rsquo;s address, or red with nothing at all.</p>
+    <p>Then the demo that proves it: create a certificate with a <b>two-minute lifetime</b>, show green, wait, refresh. Red &mdash; with no code having run, no job having fired and no date having been compared.</p>
+    <p style="color: var(--muted);"><b>Not building in v1:</b> the physical tagging supply chain, and any system mapping inspector addresses to human beings.</p>
+    <p style="color: var(--muted);"><b>The honest limit:</b> LAYAK proves who signed and when. It cannot prove the examination happened. It raises forgery from editing a PDF to committing attributable fraud under a revocable registration &mdash; a real improvement, and not a solution.</p>
+  </section>
+
+  <footer class="col">
+    <hr style="margin-bottom: 1.5rem;">
+    <p>Submitted to the open Other lane. Design only &mdash; the ideathon asks for an idea and its Arkiv data model, and nothing here is deployed.</p>
+  </footer>
+
+</div>

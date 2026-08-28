@@ -1,0 +1,378 @@
+{
+"stress": [
+{
+"block": 20455000,
+"chainlink": 2911.12,
+"uniswap": 2911.92,
+"bps": 2.8
+},
+{
+"block": 20455250,
+"chainlink": 2911.93,
+"uniswap": 2917.02,
+"bps": 17.5
+},
+{
+"block": 20455500,
+"chainlink": 2920.21,
+"uniswap": 2914.08,
+"bps": -21.0
+},
+{
+"block": 20455750,
+"chainlink": 2896.59,
+"uniswap": 2892.38,
+"bps": -14.5
+},
+{
+"block": 20456000,
+"chainlink": 2851.23,
+"uniswap": 2848.2,
+"bps": -10.6
+},
+{
+"block": 20456250,
+"chainlink": 2829.78,
+"uniswap": 2827.33,
+"bps": -8.7
+},
+{
+"block": 20456500,
+"chainlink": 2833.22,
+"uniswap": 2823.44,
+"bps": -34.5
+},
+{
+"block": 20456750,
+"chainlink": 2708.64,
+"uniswap": 2685.03,
+"bps": -87.2
+},
+{
+"block": 20457000,
+"chainlink": 2701.19,
+"uniswap": 2699.04,
+"bps": -7.9
+},
+{
+"block": 20457250,
+"chainlink": 2741.58,
+"uniswap": 2745.87,
+"bps": 15.7
+},
+{
+"block": 20457500,
+"chainlink": 2762.14,
+"uniswap": 2767.29,
+"bps": 18.6
+},
+{
+"block": 20457750,
+"chainlink": 2746.4,
+"uniswap": 2747.56,
+"bps": 4.2
+},
+{
+"block": 20458000,
+"chainlink": 2730.03,
+"uniswap": 2740.5,
+"bps": 38.4
+},
+{
+"block": 20458250,
+"chainlink": 2733.28,
+"uniswap": 2740.14,
+"bps": 25.1
+},
+{
+"block": 20458500,
+"chainlink": 2709.62,
+"uniswap": 2706.36,
+"bps": -12.0
+},
+{
+"block": 20458750,
+"chainlink": 2671.62,
+"uniswap": 2671.55,
+"bps": -0.3
+},
+{
+"block": 20459000,
+"chainlink": 2233.8,
+"uniswap": 2139.28,
+"bps": -423.1
+},
+{
+"block": 20459250,
+"chainlink": 2319.04,
+"uniswap": 2318.81,
+"bps": -1.0
+},
+{
+"block": 20459500,
+"chainlink": 2307.44,
+"uniswap": 2318.33,
+"bps": 47.2
+},
+{
+"block": 20459750,
+"chainlink": 2320.01,
+"uniswap": 2323.2,
+"bps": 13.7
+},
+{
+"block": 20460000,
+"chainlink": 2354.19,
+"uniswap": 2360.45,
+"bps": 26.6
+},
+{
+"block": 20460250,
+"chainlink": 2315.73,
+"uniswap": 2317.19,
+"bps": 6.3
+},
+{
+"block": 20460500,
+"chainlink": 2295.66,
+"uniswap": 2286.15,
+"bps": -41.4
+},
+{
+"block": 20460750,
+"chainlink": 2266.29,
+"uniswap": 2274.25,
+"bps": 35.1
+},
+{
+"block": 20461000,
+"chainlink": 2360.29,
+"uniswap": 2353.88,
+"bps": -27.1
+},
+{
+"block": 20461250,
+"chainlink": 2308.17,
+"uniswap": 2298.68,
+"bps": -41.1
+},
+{
+"block": 20461500,
+"chainlink": 2324.21,
+"uniswap": 2325.3,
+"bps": 4.7
+},
+{
+"block": 20461750,
+"chainlink": 2272.21,
+"uniswap": 2272.41,
+"bps": 0.9
+},
+{
+"block": 20462000,
+"chainlink": 2272.92,
+"uniswap": 2274.95,
+"bps": 8.9
+},
+{
+"block": 20462250,
+"chainlink": 2290.11,
+"uniswap": 2300.42,
+"bps": 45.0
+},
+{
+"block": 20462500,
+"chainlink": 2230.83,
+"uniswap": 2224.46,
+"bps": -28.5
+}
+],
+"calm": [
+{
+"block": 20600000,
+"chainlink": 2791.7,
+"uniswap": 2795.77,
+"bps": 14.6
+},
+{
+"block": 20600250,
+"chainlink": 2797.31,
+"uniswap": 2798.39,
+"bps": 3.9
+},
+{
+"block": 20600500,
+"chainlink": 2788.76,
+"uniswap": 2797.73,
+"bps": 32.2
+},
+{
+"block": 20600750,
+"chainlink": 2795.4,
+"uniswap": 2793.68,
+"bps": -6.1
+},
+{
+"block": 20601000,
+"chainlink": 2798.42,
+"uniswap": 2793.84,
+"bps": -16.4
+},
+{
+"block": 20601250,
+"chainlink": 2767.32,
+"uniswap": 2765.09,
+"bps": -8.0
+},
+{
+"block": 20601500,
+"chainlink": 2757.75,
+"uniswap": 2756.43,
+"bps": -4.8
+},
+{
+"block": 20601750,
+"chainlink": 2754.04,
+"uniswap": 2758.74,
+"bps": 17.1
+},
+{
+"block": 20602000,
+"chainlink": 2768.6,
+"uniswap": 2779.42,
+"bps": 39.1
+},
+{
+"block": 20602250,
+"chainlink": 2760.19,
+"uniswap": 2760.78,
+"bps": 2.1
+},
+{
+"block": 20602500,
+"chainlink": 2760.96,
+"uniswap": 2760.41,
+"bps": -2.0
+},
+{
+"block": 20602750,
+"chainlink": 2760.96,
+"uniswap": 2766.21,
+"bps": 19.0
+},
+{
+"block": 20603000,
+"chainlink": 2765.44,
+"uniswap": 2758.88,
+"bps": -23.7
+},
+{
+"block": 20603250,
+"chainlink": 2761.5,
+"uniswap": 2763.33,
+"bps": 6.6
+},
+{
+"block": 20603500,
+"chainlink": 2768.24,
+"uniswap": 2768.46,
+"bps": 0.8
+},
+{
+"block": 20603750,
+"chainlink": 2763.55,
+"uniswap": 2760.79,
+"bps": -10.0
+},
+{
+"block": 20604000,
+"chainlink": 2756.52,
+"uniswap": 2755.56,
+"bps": -3.5
+},
+{
+"block": 20604250,
+"chainlink": 2744.55,
+"uniswap": 2744.15,
+"bps": -1.4
+},
+{
+"block": 20604500,
+"chainlink": 2744.28,
+"uniswap": 2751.37,
+"bps": 25.8
+},
+{
+"block": 20604750,
+"chainlink": 2753.29,
+"uniswap": 2751.2,
+"bps": -7.6
+},
+{
+"block": 20605000,
+"chainlink": 2756.63,
+"uniswap": 2758.02,
+"bps": 5.0
+},
+{
+"block": 20605250,
+"chainlink": 2753.63,
+"uniswap": 2759.57,
+"bps": 21.6
+},
+{
+"block": 20605500,
+"chainlink": 2752.58,
+"uniswap": 2753.13,
+"bps": 2.0
+},
+{
+"block": 20605750,
+"chainlink": 2753.28,
+"uniswap": 2753.32,
+"bps": 0.1
+},
+{
+"block": 20606000,
+"chainlink": 2767.7,
+"uniswap": 2761.14,
+"bps": -23.7
+},
+{
+"block": 20606250,
+"chainlink": 2762.16,
+"uniswap": 2766.99,
+"bps": 17.5
+},
+{
+"block": 20606500,
+"chainlink": 2765.62,
+"uniswap": 2771.65,
+"bps": 21.8
+},
+{
+"block": 20606750,
+"chainlink": 2762.61,
+"uniswap": 2766.91,
+"bps": 15.6
+},
+{
+"block": 20607000,
+"chainlink": 2764.25,
+"uniswap": 2766.2,
+"bps": 7.0
+},
+{
+"block": 20607250,
+"chainlink": 2771.54,
+"uniswap": 2771.59,
+"bps": 0.2
+},
+{
+"block": 20607500,
+"chainlink": 2771.54,
+"uniswap": 2771.18,
+"bps": -1.3
+}
+]
+}

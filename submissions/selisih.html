@@ -1,0 +1,1290 @@
+<title>Selisih Divergence Board</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #E9EBEE;
+    --surface: #FFFFFF;
+    --surface-2: #F4F5F7;
+    --ink: #14181F;
+    --muted: #5B6472;
+    --rule: #CFD4DB;
+    --accent: #AD3A0A;         /* darkened from #C4430D: 4.23:1 on the light ground failed AA for small text */
+    --accent-soft: #F6E3D9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1219; --surface: #161A22; --surface-2: #1C212A;
+      --ink: #E3E7ED; --muted: #8C95A3; --rule: #262D38;
+      --accent: #FF7A45; --accent-soft: #33201A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1219; --surface: #161A22; --surface-2: #1C212A;
+    --ink: #E3E7ED; --muted: #8C95A3; --rule: #262D38;
+    --accent: #FF7A45; --accent-soft: #33201A;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 16px; line-height: 1.6; margin: 0;
+    padding: 3rem 1.5rem 6rem;
+  }
+
+  .wrap { max-width: 74rem; margin: 0 auto; display: flex; flex-direction: column; gap: 3.5rem; }
+  .col { max-width: 42rem; display: flex; flex-direction: column; gap: 1rem; }
+
+  h1, h2, h3 {
+    font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
+    font-weight: 700; text-wrap: balance; margin: 0; line-height: 1.15;
+  }
+  h1 { font-size: clamp(2.4rem, 6vw, 3.6rem); letter-spacing: -0.02em; }
+  h2 { font-size: 1.6rem; letter-spacing: -0.01em; }
+  h3 { font-size: 1.05rem; letter-spacing: 0.01em; }
+  p { margin: 0; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; font-weight: 500;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
+  }
+  .gloss {
+    font-size: 0.95rem; color: var(--muted); font-style: italic;
+    border-left: 2px solid var(--accent); padding-left: 0.85rem; max-width: 34rem;
+  }
+  .lede { font-size: 1.15rem; color: var(--muted); max-width: 40rem; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .chip {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.7rem; letter-spacing: 0.08em;
+    text-transform: uppercase; border: 1px solid var(--rule);
+    background: var(--surface); padding: 0.3rem 0.6rem;
+  }
+  .chip.hot { border-color: var(--accent); color: var(--accent); }
+
+  hr { border: 0; border-top: 1px solid var(--rule); margin: 0; }
+
+  figure {
+    margin: 0; background: var(--surface); border: 1px solid var(--rule);
+    padding: 1.5rem; overflow-x: auto;
+  }
+  figure svg { display: block; width: 100%; max-width: 100%; height: auto; min-width: 30rem; }
+  figcaption {
+    font-size: 0.88rem; color: var(--muted); margin-top: 1rem; padding-top: 1rem;
+    border-top: 1px solid var(--rule); max-width: 44rem;
+  }
+  figcaption b { color: var(--ink); font-weight: 600; }
+
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1.25rem; }
+  .card {
+    background: var(--surface); border: 1px solid var(--rule);
+    border-top: 3px solid var(--accent); padding: 1.25rem;
+    display: flex; flex-direction: column; gap: 0.6rem;
+  }
+  .card p { font-size: 0.94rem; color: var(--muted); }
+  .card b { color: var(--ink); }
+
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.68rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted); font-weight: 500;
+  }
+  td code, p code, li code {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.82rem; color: var(--ink);
+    background: var(--surface-2); padding: 0.12rem 0.3rem;
+    overflow-wrap: anywhere;   /* inline-block removed: it prevented wrapping and widened the body on mobile */
+  }
+  pre code { overflow-wrap: normal; white-space: pre; background: transparent; padding: 0; }
+  .tbl { background: var(--surface); border: 1px solid var(--rule); overflow-x: auto; }
+  .tbl table { min-width: 34rem; }
+  .tbl td.hit { color: var(--accent); font-weight: 600; }
+
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 2rem; }
+  ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  li { color: var(--muted); }
+  li b { color: var(--ink); font-weight: 600; }
+
+  .pull {
+    border-left: 3px solid var(--accent); padding-left: 1.25rem;
+    font-family: "IBM Plex Sans Condensed", sans-serif; font-size: 1.35rem;
+    font-weight: 600; line-height: 1.3; text-wrap: balance;
+  }
+
+  footer { color: var(--muted); font-size: 0.85rem; }
+</style>
+
+<div class="wrap">
+
+  <header class="col">
+    <p class="eyebrow">Arkiv Ideathon &middot; Challenge 3 &middot; DeFi</p>
+    <h1>SELISIH</h1>
+    <p class="gloss">Selisih is Indonesian for the <em>difference</em> between two numbers. Berselisih is to be in dispute. One word for both halves of this product.</p>
+    <p class="lede">A multi-witness flight recorder for DeFi risk state. Independent watchers each publish their own signed snapshot of the same lending market &mdash; and the product is not the snapshot, it&rsquo;s the disagreement between them.</p>
+    <div class="chips">
+      <span class="chip">Off the execution hot path</span>
+      <span class="chip">Append-only</span>
+      <span class="chip hot">Divergence is the query</span>
+    </div>
+  </header>
+
+  <figure>
+    <svg viewBox="0 0 760 300" role="img" aria-label="Seven witness slots for round 812: five agree near health factor 10420, one reports 9980 and is the attributable outlier, and one never reported at all.">
+      <defs>
+        <marker id="sl-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+
+      <text x="0" y="16" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.55" letter-spacing="1.4">MARKET aave-v3-eth-wsteth &nbsp;/&nbsp; ROUND 812</text>
+
+      <line x1="96" y1="52" x2="740" y2="52" stroke="currentColor" opacity="0.12"/>
+      <line x1="96" y1="128" x2="740" y2="128" stroke="currentColor" opacity="0.12"/>
+      <line x1="96" y1="204" x2="740" y2="204" stroke="currentColor" opacity="0.12"/>
+      <text x="88" y="56" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.5">10500</text>
+      <text x="88" y="132" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.5">10200</text>
+      <text x="88" y="208" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.5">9900</text>
+      <text x="96" y="38" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity="0.5">healthFactorBps</text>
+
+      <line x1="96" y1="72" x2="740" y2="72" stroke="currentColor" stroke-dasharray="3 4" opacity="0.45"/>
+      <text x="740" y="66" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity="0.6">median 10420 &mdash; never written</text>
+
+      <circle cx="140" cy="72" r="7" fill="currentColor" opacity="0.75"/>
+      <circle cx="240" cy="73" r="7" fill="currentColor" opacity="0.75"/>
+      <circle cx="340" cy="71" r="7" fill="currentColor" opacity="0.75"/>
+      <circle cx="540" cy="72" r="7" fill="currentColor" opacity="0.75"/>
+      <circle cx="640" cy="72" r="7" fill="currentColor" opacity="0.75"/>
+
+      <circle cx="440" cy="192" r="9" fill="var(--accent)"/>
+      <line x1="440" y1="80" x2="440" y2="182" stroke="var(--accent)" stroke-dasharray="2 4" opacity="0.7"/>
+      <text x="440" y="222" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--accent)" font-weight="600">9980</text>
+      <line x1="440" y1="236" x2="440" y2="256" stroke="var(--accent)" marker-end="url(#sl-arrow)" opacity="0.9"/>
+      <text x="440" y="274" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="var(--accent)" font-weight="600">outlier &mdash; named by $creator</text>
+
+      <circle cx="740" cy="72" r="8" fill="none" stroke="currentColor" stroke-dasharray="3 3" opacity="0.45"/>
+      <text x="740" y="250" text-anchor="end" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="currentColor" opacity="0.6">no report filed</text>
+      <line x1="740" y1="232" x2="740" y2="88" stroke="currentColor" stroke-dasharray="2 4" opacity="0.3"/>
+
+      <text x="140" y="292" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.55">w1</text>
+      <text x="240" y="292" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.55">w2</text>
+      <text x="340" y="292" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.55">w3</text>
+      <text x="440" y="292" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--accent)" font-weight="600">w4</text>
+      <text x="540" y="292" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.55">w5</text>
+      <text x="640" y="292" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.55">w6</text>
+      <text x="740" y="292" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.4">w7</text>
+    </svg>
+    <figcaption><b>The core screen, and the whole idea.</b> Five witnesses agree, one reports a health factor 440 basis points lower, and a seventh never filed at all. A single-writer log can show neither: the outlier would simply be the value, and the silence would be an absence in someone&rsquo;s server. Here the outlier is attributable to an immutable <code>$creator</code>, and the gap is checkable against the roster that was live at round 812.</figcaption>
+  </figure>
+
+  <section class="col" style="max-width: 100%;">
+    <h2>It is not an oracle. That is the idea.</h2>
+    <p class="lede" style="font-size: 1rem;">The nearest neighbours are oracle networks, so the difference is worth stating plainly rather than letting it be assumed away. Chainlink aggregates many sources into one feed. Pyth does the same at high frequency. UMA takes a proposed value, opens a challenge window, and escalates disputes to a token vote that returns a resolved answer. Different mechanisms, one shared purpose: <b>collapse N observations into 1 value something downstream can settle against.</b></p>
+    <div class="tbl" style="margin-top: 0.5rem;">
+      <table>
+        <thead><tr><th>Property</th><th>Oracle networks</th><th>SELISIH</th></tr></thead>
+        <tbody>
+          <tr><td><b>Output</b></td><td>one canonical value</td><td class="hit">N attributable readings, kept apart</td></tr>
+          <tr><td><b>Disagreement is</b></td><td>a failure to resolve away</td><td class="hit">the product</td></tr>
+          <tr><td><b>Settles anything?</b></td><td>yes, that is the point</td><td class="hit">no, ever</td></tr>
+          <tr><td><b>Slashing / token vote</b></td><td>central to the design</td><td class="hit">absent by construction</td></tr>
+          <tr><td><b>Position</b></td><td>on the hot path</td><td class="hit">explicitly off it</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="pull" style="margin-top: 1.5rem;">An oracle returning seven different numbers has malfunctioned. SELISIH returning seven different numbers is SELISIH working.</p>
+    <p style="color: var(--muted); max-width: 42rem;">The median is drawn as a faint dashed line and <b>is never written anywhere</b>. The moment a canonical value exists, something builds on it &mdash; and SELISIH is on a hot path it was designed to stay off. What it does borrow honestly is the dispute window: UMA runs a 48-hour liveness period, and 72 hours is chosen as the snapshot lifetime for the same reason. It is roughly how long a challenge to market evidence stays live.</p>
+  </section>
+
+  <hr>
+
+  <figure>
+    <svg viewBox="0 0 780 350" role="img" aria-label="Divergence between Chainlink and Uniswap ETH/USD at the same block, in basis points: 31 blocks across the 5 August 2024 crash and 31 blocks across a calm window. Stress max is 423 basis points at block 20,459,000; calm max is 39.">
+      <text x="0" y="16" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.55" letter-spacing="1.4">UNISWAP SPOT &minus; CHAINLINK, SAME BLOCK &middot; BASIS POINTS &middot; REAL MAINNET STATE</text>
+      <line x1="56" y1="296.1" x2="764" y2="296.1" stroke="currentColor" opacity="0.1"/>
+      <text x="48" y="300.1" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.5">-400</text>
+      <line x1="56" y1="240.6" x2="764" y2="240.6" stroke="currentColor" opacity="0.1"/>
+      <text x="48" y="244.6" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.5">-200</text>
+      <line x1="56" y1="185.0" x2="764" y2="185.0" stroke="currentColor" opacity="0.35"/>
+      <text x="48" y="189.0" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.5">+0</text>
+      <line x1="56" y1="129.4" x2="764" y2="129.4" stroke="currentColor" opacity="0.1"/>
+      <text x="48" y="133.4" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.5">+200</text>
+      <line x1="56" y1="73.9" x2="764" y2="73.9" stroke="currentColor" opacity="0.1"/>
+      <text x="48" y="77.9" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.5">+400</text>
+      <text x="56.0" y="44" font-family="IBM Plex Sans Condensed, sans-serif" font-size="12" font-weight="700" fill="currentColor" opacity="0.8">STRESS &middot; 5 Aug 2024 &middot; blocks 20,455,000&ndash;20,462,500</text>
+      <g><title>block 20,455,000: chainlink $2911.12, uniswap $2911.92, Δ +2.8 bps</title><line x1="61.5" y1="185.0" x2="61.5" y2="184.2" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="61.5" cy="184.2" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,455,250: chainlink $2911.93, uniswap $2917.02, Δ +17.5 bps</title><line x1="72.5" y1="185.0" x2="72.5" y2="180.1" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="72.5" cy="180.1" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,455,500: chainlink $2920.21, uniswap $2914.08, Δ -21.0 bps</title><line x1="83.6" y1="185.0" x2="83.6" y2="190.8" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="83.6" cy="190.8" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,455,750: chainlink $2896.59, uniswap $2892.38, Δ -14.5 bps</title><line x1="94.6" y1="185.0" x2="94.6" y2="189.0" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="94.6" cy="189.0" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,456,000: chainlink $2851.23, uniswap $2848.20, Δ -10.6 bps</title><line x1="105.6" y1="185.0" x2="105.6" y2="187.9" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="105.6" cy="187.9" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,456,250: chainlink $2829.78, uniswap $2827.33, Δ -8.7 bps</title><line x1="116.7" y1="185.0" x2="116.7" y2="187.4" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="116.7" cy="187.4" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,456,500: chainlink $2833.22, uniswap $2823.44, Δ -34.5 bps</title><line x1="127.7" y1="185.0" x2="127.7" y2="194.6" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="127.7" cy="194.6" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,456,750: chainlink $2708.64, uniswap $2685.03, Δ -87.2 bps</title><line x1="138.7" y1="185.0" x2="138.7" y2="209.2" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="138.7" cy="209.2" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,457,000: chainlink $2701.19, uniswap $2699.04, Δ -7.9 bps</title><line x1="149.8" y1="185.0" x2="149.8" y2="187.2" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="149.8" cy="187.2" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,457,250: chainlink $2741.58, uniswap $2745.87, Δ +15.7 bps</title><line x1="160.8" y1="185.0" x2="160.8" y2="180.6" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="160.8" cy="180.6" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,457,500: chainlink $2762.14, uniswap $2767.29, Δ +18.6 bps</title><line x1="171.8" y1="185.0" x2="171.8" y2="179.8" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="171.8" cy="179.8" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,457,750: chainlink $2746.40, uniswap $2747.56, Δ +4.2 bps</title><line x1="182.9" y1="185.0" x2="182.9" y2="183.8" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="182.9" cy="183.8" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,458,000: chainlink $2730.03, uniswap $2740.50, Δ +38.4 bps</title><line x1="193.9" y1="185.0" x2="193.9" y2="174.3" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="193.9" cy="174.3" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,458,250: chainlink $2733.28, uniswap $2740.14, Δ +25.1 bps</title><line x1="204.9" y1="185.0" x2="204.9" y2="178.0" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="204.9" cy="178.0" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,458,500: chainlink $2709.62, uniswap $2706.36, Δ -12.0 bps</title><line x1="216.0" y1="185.0" x2="216.0" y2="188.3" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="216.0" cy="188.3" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,458,750: chainlink $2671.62, uniswap $2671.55, Δ -0.3 bps</title><line x1="227.0" y1="185.0" x2="227.0" y2="185.1" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="227.0" cy="185.1" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,459,000: chainlink $2233.80, uniswap $2139.28, Δ -423.1 bps</title><line x1="238.0" y1="185.0" x2="238.0" y2="302.5" stroke="var(--accent)" stroke-width="2" opacity="1"/><circle cx="238.0" cy="302.5" r="5" fill="var(--accent)" opacity="1"/></g>
+      <text x="248.0" y="306.5" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="var(--accent)">-423 bps &middot; block 20,459,000</text>
+      <text x="248.0" y="320.5" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--accent)" opacity="0.85">chainlink $2,234 &middot; uniswap $2,139</text>
+      <g><title>block 20,459,250: chainlink $2319.04, uniswap $2318.81, Δ -1.0 bps</title><line x1="249.1" y1="185.0" x2="249.1" y2="185.3" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="249.1" cy="185.3" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,459,500: chainlink $2307.44, uniswap $2318.33, Δ +47.2 bps</title><line x1="260.1" y1="185.0" x2="260.1" y2="171.9" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="260.1" cy="171.9" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,459,750: chainlink $2320.01, uniswap $2323.20, Δ +13.7 bps</title><line x1="271.1" y1="185.0" x2="271.1" y2="181.2" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="271.1" cy="181.2" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,460,000: chainlink $2354.19, uniswap $2360.45, Δ +26.6 bps</title><line x1="282.2" y1="185.0" x2="282.2" y2="177.6" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="282.2" cy="177.6" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,460,250: chainlink $2315.73, uniswap $2317.19, Δ +6.3 bps</title><line x1="293.2" y1="185.0" x2="293.2" y2="183.2" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="293.2" cy="183.2" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,460,500: chainlink $2295.66, uniswap $2286.15, Δ -41.4 bps</title><line x1="304.2" y1="185.0" x2="304.2" y2="196.5" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="304.2" cy="196.5" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,460,750: chainlink $2266.29, uniswap $2274.25, Δ +35.1 bps</title><line x1="315.3" y1="185.0" x2="315.3" y2="175.2" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="315.3" cy="175.2" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,461,000: chainlink $2360.29, uniswap $2353.88, Δ -27.1 bps</title><line x1="326.3" y1="185.0" x2="326.3" y2="192.5" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="326.3" cy="192.5" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,461,250: chainlink $2308.17, uniswap $2298.68, Δ -41.1 bps</title><line x1="337.3" y1="185.0" x2="337.3" y2="196.4" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="337.3" cy="196.4" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,461,500: chainlink $2324.21, uniswap $2325.30, Δ +4.7 bps</title><line x1="348.4" y1="185.0" x2="348.4" y2="183.7" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="348.4" cy="183.7" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,461,750: chainlink $2272.21, uniswap $2272.41, Δ +0.9 bps</title><line x1="359.4" y1="185.0" x2="359.4" y2="184.8" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="359.4" cy="184.8" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,462,000: chainlink $2272.92, uniswap $2274.95, Δ +8.9 bps</title><line x1="370.4" y1="185.0" x2="370.4" y2="182.5" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="370.4" cy="182.5" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,462,250: chainlink $2290.11, uniswap $2300.42, Δ +45.0 bps</title><line x1="381.5" y1="185.0" x2="381.5" y2="172.5" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="381.5" cy="172.5" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,462,500: chainlink $2230.83, uniswap $2224.46, Δ -28.5 bps</title><line x1="392.5" y1="185.0" x2="392.5" y2="192.9" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="392.5" cy="192.9" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <text x="398.0" y="338" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.6">median 17.5 &middot; p90 41.4 &middot; max 423.1 bps</text>
+      <text x="422.0" y="44" font-family="IBM Plex Sans Condensed, sans-serif" font-size="12" font-weight="700" fill="currentColor" opacity="0.8">CALM &middot; ~25 Aug 2024 &middot; blocks 20,600,000&ndash;20,607,500</text>
+      <g><title>block 20,600,000: chainlink $2791.70, uniswap $2795.77, Δ +14.6 bps</title><line x1="427.5" y1="185.0" x2="427.5" y2="180.9" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="427.5" cy="180.9" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,600,250: chainlink $2797.31, uniswap $2798.39, Δ +3.9 bps</title><line x1="438.5" y1="185.0" x2="438.5" y2="183.9" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="438.5" cy="183.9" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,600,500: chainlink $2788.76, uniswap $2797.73, Δ +32.2 bps</title><line x1="449.6" y1="185.0" x2="449.6" y2="176.1" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="449.6" cy="176.1" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,600,750: chainlink $2795.40, uniswap $2793.68, Δ -6.1 bps</title><line x1="460.6" y1="185.0" x2="460.6" y2="186.7" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="460.6" cy="186.7" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,601,000: chainlink $2798.42, uniswap $2793.84, Δ -16.4 bps</title><line x1="471.6" y1="185.0" x2="471.6" y2="189.6" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="471.6" cy="189.6" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,601,250: chainlink $2767.32, uniswap $2765.09, Δ -8.0 bps</title><line x1="482.7" y1="185.0" x2="482.7" y2="187.2" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="482.7" cy="187.2" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,601,500: chainlink $2757.75, uniswap $2756.43, Δ -4.8 bps</title><line x1="493.7" y1="185.0" x2="493.7" y2="186.3" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="493.7" cy="186.3" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,601,750: chainlink $2754.04, uniswap $2758.74, Δ +17.1 bps</title><line x1="504.7" y1="185.0" x2="504.7" y2="180.2" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="504.7" cy="180.2" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,602,000: chainlink $2768.60, uniswap $2779.42, Δ +39.1 bps</title><line x1="515.8" y1="185.0" x2="515.8" y2="174.1" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="515.8" cy="174.1" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,602,250: chainlink $2760.19, uniswap $2760.78, Δ +2.1 bps</title><line x1="526.8" y1="185.0" x2="526.8" y2="184.4" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="526.8" cy="184.4" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,602,500: chainlink $2760.96, uniswap $2760.41, Δ -2.0 bps</title><line x1="537.8" y1="185.0" x2="537.8" y2="185.6" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="537.8" cy="185.6" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,602,750: chainlink $2760.96, uniswap $2766.21, Δ +19.0 bps</title><line x1="548.9" y1="185.0" x2="548.9" y2="179.7" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="548.9" cy="179.7" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,603,000: chainlink $2765.44, uniswap $2758.88, Δ -23.7 bps</title><line x1="559.9" y1="185.0" x2="559.9" y2="191.6" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="559.9" cy="191.6" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,603,250: chainlink $2761.50, uniswap $2763.33, Δ +6.6 bps</title><line x1="570.9" y1="185.0" x2="570.9" y2="183.2" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="570.9" cy="183.2" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,603,500: chainlink $2768.24, uniswap $2768.46, Δ +0.8 bps</title><line x1="582.0" y1="185.0" x2="582.0" y2="184.8" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="582.0" cy="184.8" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,603,750: chainlink $2763.55, uniswap $2760.79, Δ -10.0 bps</title><line x1="593.0" y1="185.0" x2="593.0" y2="187.8" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="593.0" cy="187.8" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,604,000: chainlink $2756.52, uniswap $2755.56, Δ -3.5 bps</title><line x1="604.0" y1="185.0" x2="604.0" y2="186.0" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="604.0" cy="186.0" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,604,250: chainlink $2744.55, uniswap $2744.15, Δ -1.4 bps</title><line x1="615.1" y1="185.0" x2="615.1" y2="185.4" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="615.1" cy="185.4" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,604,500: chainlink $2744.28, uniswap $2751.37, Δ +25.8 bps</title><line x1="626.1" y1="185.0" x2="626.1" y2="177.8" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="626.1" cy="177.8" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,604,750: chainlink $2753.29, uniswap $2751.20, Δ -7.6 bps</title><line x1="637.1" y1="185.0" x2="637.1" y2="187.1" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="637.1" cy="187.1" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,605,000: chainlink $2756.63, uniswap $2758.02, Δ +5.0 bps</title><line x1="648.2" y1="185.0" x2="648.2" y2="183.6" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="648.2" cy="183.6" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,605,250: chainlink $2753.63, uniswap $2759.57, Δ +21.6 bps</title><line x1="659.2" y1="185.0" x2="659.2" y2="179.0" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="659.2" cy="179.0" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,605,500: chainlink $2752.58, uniswap $2753.13, Δ +2.0 bps</title><line x1="670.2" y1="185.0" x2="670.2" y2="184.4" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="670.2" cy="184.4" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,605,750: chainlink $2753.28, uniswap $2753.32, Δ +0.1 bps</title><line x1="681.3" y1="185.0" x2="681.3" y2="185.0" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="681.3" cy="185.0" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,606,000: chainlink $2767.70, uniswap $2761.14, Δ -23.7 bps</title><line x1="692.3" y1="185.0" x2="692.3" y2="191.6" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="692.3" cy="191.6" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,606,250: chainlink $2762.16, uniswap $2766.99, Δ +17.5 bps</title><line x1="703.3" y1="185.0" x2="703.3" y2="180.1" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="703.3" cy="180.1" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,606,500: chainlink $2765.62, uniswap $2771.65, Δ +21.8 bps</title><line x1="714.4" y1="185.0" x2="714.4" y2="178.9" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="714.4" cy="178.9" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,606,750: chainlink $2762.61, uniswap $2766.91, Δ +15.6 bps</title><line x1="725.4" y1="185.0" x2="725.4" y2="180.7" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="725.4" cy="180.7" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,607,000: chainlink $2764.25, uniswap $2766.20, Δ +7.0 bps</title><line x1="736.4" y1="185.0" x2="736.4" y2="183.1" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="736.4" cy="183.1" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,607,250: chainlink $2771.54, uniswap $2771.59, Δ +0.2 bps</title><line x1="747.5" y1="185.0" x2="747.5" y2="184.9" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="747.5" cy="184.9" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <g><title>block 20,607,500: chainlink $2771.54, uniswap $2771.18, Δ -1.3 bps</title><line x1="758.5" y1="185.0" x2="758.5" y2="185.4" stroke="currentColor" stroke-width="2" opacity="0.7"/><circle cx="758.5" cy="185.4" r="3.5" fill="currentColor" opacity="0.7"/></g>
+      <text x="764.0" y="338" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.6">median 7.6 &middot; p90 23.7 &middot; max 39.1 bps</text>
+      </svg>
+    <figcaption><b>The kill test, run against real Ethereum mainnet state.</b> Two independent observers of the same quantity at the same block. Under stress the median disagreement is 2.3&times; the calm baseline &mdash; but the <i>tail</i> is 10.8&times;. At block 20,459,000, the bottom of the cascade, Chainlink read $2,234 while Uniswap spot read $2,139: a 4.2% disagreement at exactly the moment liquidation engines were deciding who to liquidate. On the divergence board, that is one orange dot with a <code>$creator</code> on it. Script and raw output ship with the submission; hover any mark for its values.</figcaption>
+  </figure>
+
+  <figure>
+    <svg viewBox="0 0 780 350" role="img" aria-label="Per-round spread between the highest and lowest of Chainlink&#39;s 31 node observations, in basis points, for 161 rounds across the 5 August 2024 crash and 18 rounds across a calm window. Stress max is 868 basis points at block 20,458,998; calm max is 10.">
+      <text x="0" y="16" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.55" letter-spacing="1.4">CHAINLINK ETH/USD &middot; (MAX &minus; MIN) / MEDIAN OF THE 31 NODE OBSERVATIONS, PER ROUND &middot; BASIS POINTS</text>
+      <line x1="56" y1="310.0" x2="764" y2="310.0" stroke="currentColor" opacity="0.35"/>
+      <text x="48" y="314.0" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.5">0</text>
+      <line x1="56" y1="254.4" x2="764" y2="254.4" stroke="currentColor" opacity="0.1"/>
+      <text x="48" y="258.4" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.5">200</text>
+      <line x1="56" y1="198.9" x2="764" y2="198.9" stroke="currentColor" opacity="0.1"/>
+      <text x="48" y="202.9" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.5">400</text>
+      <line x1="56" y1="143.3" x2="764" y2="143.3" stroke="currentColor" opacity="0.1"/>
+      <text x="48" y="147.3" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.5">600</text>
+      <line x1="56" y1="87.8" x2="764" y2="87.8" stroke="currentColor" opacity="0.1"/>
+      <text x="48" y="91.8" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.5">800</text>
+      <text x="56.0" y="44" font-family="IBM Plex Sans Condensed, sans-serif" font-size="12" font-weight="700" fill="currentColor" opacity="0.8">STRESS &middot; 5 Aug 2024 &middot; 161 rounds</text>
+      <g><title>block 20,456,521: 31 nodes, $2823.20–$2825.51, median $2824.95, spread 8 bps</title><line x1="57.1" y1="310.0" x2="57.1" y2="307.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,456,536: 31 nodes, $2808.39–$2820.86, median $2809.52, spread 44 bps</title><line x1="59.2" y1="310.0" x2="59.2" y2="297.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,456,596: 30 nodes, $2787.78–$2801.60, median $2791.15, spread 50 bps</title><line x1="61.3" y1="310.0" x2="61.3" y2="296.2" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,456,598: 30 nodes, $2770.30–$2795.71, median $2772.67, spread 92 bps</title><line x1="63.4" y1="310.0" x2="63.4" y2="284.5" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,456,601: 30 nodes, $2732.92–$2790.50, median $2736.57, spread 210 bps</title><line x1="65.6" y1="310.0" x2="65.6" y2="251.6" stroke="var(--accent)" stroke-width="1.5" opacity="1"/></g>
+      <g><title>block 20,456,628: 31 nodes, $2741.85–$2754.69, median $2754.13, spread 47 bps</title><line x1="67.7" y1="310.0" x2="67.7" y2="297.0" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,456,657: 31 nodes, $2739.60–$2745.87, median $2740.21, spread 23 bps</title><line x1="69.8" y1="310.0" x2="69.8" y2="303.6" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,456,715: 31 nodes, $2722.75–$2731.71, median $2725.78, spread 33 bps</title><line x1="71.9" y1="310.0" x2="71.9" y2="300.9" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,456,750: 31 nodes, $2706.30–$2718.77, median $2708.64, spread 46 bps</title><line x1="74.1" y1="310.0" x2="74.1" y2="297.2" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,456,765: 31 nodes, $2674.33–$2704.33, median $2678.68, spread 112 bps</title><line x1="76.2" y1="310.0" x2="76.2" y2="278.9" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,456,767: 31 nodes, $2654.41–$2700.56, median $2655.66, spread 174 bps</title><line x1="78.3" y1="310.0" x2="78.3" y2="261.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,456,772: 31 nodes, $2652.31–$2672.74, median $2669.85, spread 76 bps</title><line x1="80.4" y1="310.0" x2="80.4" y2="288.8" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,456,782: 31 nodes, $2663.40–$2694.89, median $2692.71, spread 117 bps</title><line x1="82.6" y1="310.0" x2="82.6" y2="277.5" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,456,820: 31 nodes, $2699.91–$2701.39, median $2700.56, spread 6 bps</title><line x1="84.7" y1="310.0" x2="84.7" y2="308.5" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,456,927: 31 nodes, $2683.01–$2689.98, median $2686.79, spread 26 bps</title><line x1="86.8" y1="310.0" x2="86.8" y2="302.8" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,457,000: 31 nodes, $2695.19–$2703.18, median $2701.19, spread 30 bps</title><line x1="88.9" y1="310.0" x2="88.9" y2="301.8" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,457,094: 31 nodes, $2714.45–$2720.50, median $2717.93, spread 22 bps</title><line x1="91.0" y1="310.0" x2="91.0" y2="303.8" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,457,102: 31 nodes, $2726.40–$2735.55, median $2734.45, spread 33 bps</title><line x1="93.2" y1="310.0" x2="93.2" y2="300.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,457,119: 31 nodes, $2728.54–$2732.00, median $2729.33, spread 13 bps</title><line x1="95.3" y1="310.0" x2="95.3" y2="306.5" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,457,169: 31 nodes, $2711.55–$2719.89, median $2712.69, spread 31 bps</title><line x1="97.4" y1="310.0" x2="97.4" y2="301.5" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,457,187: 31 nodes, $2719.67–$2727.27, median $2726.94, spread 28 bps</title><line x1="99.5" y1="310.0" x2="99.5" y2="302.3" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,457,239: 31 nodes, $2738.22–$2742.11, median $2741.58, spread 14 bps</title><line x1="101.7" y1="310.0" x2="101.7" y2="306.1" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,457,261: 31 nodes, $2750.74–$2756.40, median $2755.32, spread 21 bps</title><line x1="103.8" y1="310.0" x2="103.8" y2="304.3" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,457,338: 31 nodes, $2740.05–$2743.53, median $2741.12, spread 13 bps</title><line x1="105.9" y1="310.0" x2="105.9" y2="306.5" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,457,396: 31 nodes, $2750.25–$2755.63, median $2755.39, spread 20 bps</title><line x1="108.0" y1="310.0" x2="108.0" y2="304.6" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,457,418: 31 nodes, $2761.28–$2764.34, median $2762.14, spread 11 bps</title><line x1="110.2" y1="310.0" x2="110.2" y2="306.9" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,457,617: 31 nodes, $2747.90–$2751.09, median $2748.08, spread 12 bps</title><line x1="112.3" y1="310.0" x2="112.3" y2="306.8" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,457,717: 31 nodes, $2745.16–$2748.74, median $2746.40, spread 13 bps</title><line x1="114.4" y1="310.0" x2="114.4" y2="306.4" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,457,917: 31 nodes, $2729.61–$2736.62, median $2730.03, spread 26 bps</title><line x1="116.5" y1="310.0" x2="116.5" y2="302.9" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,018: 31 nodes, $2729.92–$2732.57, median $2730.98, spread 10 bps</title><line x1="118.7" y1="310.0" x2="118.7" y2="307.3" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,100: 31 nodes, $2741.69–$2749.75, median $2749.17, spread 29 bps</title><line x1="120.8" y1="310.0" x2="120.8" y2="301.9" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,127: 31 nodes, $2732.27–$2738.45, median $2733.28, spread 23 bps</title><line x1="122.9" y1="310.0" x2="122.9" y2="303.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,317: 31 nodes, $2723.70–$2724.89, median $2724.14, spread 4 bps</title><line x1="125.0" y1="310.0" x2="125.0" y2="308.8" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,396: 31 nodes, $2708.95–$2713.28, median $2709.62, spread 16 bps</title><line x1="127.2" y1="310.0" x2="127.2" y2="305.6" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,593: 31 nodes, $2692.84–$2696.14, median $2693.84, spread 12 bps</title><line x1="129.3" y1="310.0" x2="129.3" y2="306.6" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,616: 31 nodes, $2682.52–$2684.27, median $2683.31, spread 7 bps</title><line x1="131.4" y1="310.0" x2="131.4" y2="308.2" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,688: 31 nodes, $2667.92–$2674.97, median $2669.62, spread 26 bps</title><line x1="133.5" y1="310.0" x2="133.5" y2="302.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,708: 31 nodes, $2654.38–$2659.96, median $2655.29, spread 21 bps</title><line x1="135.7" y1="310.0" x2="135.7" y2="304.2" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,721: 31 nodes, $2655.31–$2678.62, median $2674.63, spread 87 bps</title><line x1="137.8" y1="310.0" x2="137.8" y2="285.8" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,726: 31 nodes, $2674.54–$2688.52, median $2688.16, spread 52 bps</title><line x1="139.9" y1="310.0" x2="139.9" y2="295.5" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,733: 31 nodes, $2670.45–$2687.45, median $2671.62, spread 64 bps</title><line x1="142.0" y1="310.0" x2="142.0" y2="292.3" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,756: 31 nodes, $2652.63–$2669.82, median $2654.86, spread 65 bps</title><line x1="144.2" y1="310.0" x2="144.2" y2="292.0" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,821: 30 nodes, $2637.93–$2645.15, median $2639.81, spread 27 bps</title><line x1="146.3" y1="310.0" x2="146.3" y2="302.4" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,828: 30 nodes, $2625.20–$2633.79, median $2626.27, spread 33 bps</title><line x1="148.4" y1="310.0" x2="148.4" y2="300.9" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,833: 31 nodes, $2601.17–$2625.05, median $2607.23, spread 92 bps</title><line x1="150.5" y1="310.0" x2="150.5" y2="284.6" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,868: 31 nodes, $2609.29–$2628.69, median $2621.31, spread 74 bps</title><line x1="152.7" y1="310.0" x2="152.7" y2="289.4" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,883: 30 nodes, $2606.18–$2612.13, median $2607.42, spread 23 bps</title><line x1="154.8" y1="310.0" x2="154.8" y2="303.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,916: 31 nodes, $2572.20–$2601.95, median $2573.67, spread 116 bps</title><line x1="156.9" y1="310.0" x2="156.9" y2="277.9" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,923: 30 nodes, $2552.07–$2573.89, median $2554.04, spread 85 bps</title><line x1="159.0" y1="310.0" x2="159.0" y2="286.3" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,926: 30 nodes, $2511.57–$2565.18, median $2519.75, spread 213 bps</title><line x1="161.1" y1="310.0" x2="161.1" y2="250.9" stroke="var(--accent)" stroke-width="1.5" opacity="1"/></g>
+      <g><title>block 20,458,942: 31 nodes, $2524.71–$2534.46, median $2533.73, spread 38 bps</title><line x1="163.3" y1="310.0" x2="163.3" y2="299.3" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,946: 31 nodes, $2513.43–$2531.78, median $2516.48, spread 73 bps</title><line x1="165.4" y1="310.0" x2="165.4" y2="289.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,971: 31 nodes, $2494.02–$2516.78, median $2496.42, spread 91 bps</title><line x1="167.5" y1="310.0" x2="167.5" y2="284.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,458,973: 31 nodes, $2461.39–$2516.45, median $2464.70, spread 223 bps</title><line x1="169.6" y1="310.0" x2="169.6" y2="247.9" stroke="var(--accent)" stroke-width="1.5" opacity="1"/></g>
+      <g><title>block 20,458,976: 31 nodes, $2413.31–$2515.81, median $2421.96, spread 423 bps</title><line x1="171.8" y1="310.0" x2="171.8" y2="192.4" stroke="var(--accent)" stroke-width="1.5" opacity="1"/></g>
+      <g><title>block 20,458,981: 31 nodes, $2339.81–$2468.70, median $2349.56, spread 549 bps</title><line x1="173.9" y1="310.0" x2="173.9" y2="157.6" stroke="var(--accent)" stroke-width="1.5" opacity="1"/></g>
+      <g><title>block 20,458,984: 31 nodes, $2304.20–$2463.69, median $2310.73, spread 690 bps</title><line x1="176.0" y1="310.0" x2="176.0" y2="118.3" stroke="var(--accent)" stroke-width="1.5" opacity="1"/></g>
+      <g><title>block 20,458,987: 31 nodes, $2314.54–$2413.58, median $2330.27, spread 425 bps</title><line x1="178.1" y1="310.0" x2="178.1" y2="191.9" stroke="var(--accent)" stroke-width="1.5" opacity="1"/></g>
+      <g><title>block 20,458,988: 31 nodes, $2320.81–$2424.99, median $2342.73, spread 445 bps</title><line x1="180.3" y1="310.0" x2="180.3" y2="186.5" stroke="var(--accent)" stroke-width="1.5" opacity="1"/></g>
+      <g><title>block 20,458,992: 31 nodes, $2310.61–$2396.79, median $2312.72, spread 373 bps</title><line x1="182.4" y1="310.0" x2="182.4" y2="206.5" stroke="var(--accent)" stroke-width="1.5" opacity="1"/></g>
+      <g><title>block 20,458,996: 31 nodes, $2163.89–$2311.96, median $2202.20, spread 672 bps</title><line x1="184.5" y1="310.0" x2="184.5" y2="123.2" stroke="var(--accent)" stroke-width="1.5" opacity="1"/></g>
+      <g><title>block 20,458,998: 31 nodes, $2141.32–$2335.32, median $2233.80, spread 868 bps</title><line x1="186.6" y1="310.0" x2="186.6" y2="68.8" stroke="var(--accent)" stroke-width="1.5" opacity="1"/></g>
+      <g><title>block 20,459,003: 31 nodes, $2194.48–$2286.36, median $2258.01, spread 407 bps</title><line x1="188.8" y1="310.0" x2="188.8" y2="197.0" stroke="var(--accent)" stroke-width="1.5" opacity="1"/></g>
+      <g><title>block 20,459,006: 31 nodes, $2194.48–$2256.39, median $2245.94, spread 276 bps</title><line x1="190.9" y1="310.0" x2="190.9" y2="233.4" stroke="var(--accent)" stroke-width="1.5" opacity="1"/></g>
+      <g><title>block 20,459,013: 31 nodes, $2233.17–$2310.34, median $2306.87, spread 335 bps</title><line x1="193.0" y1="310.0" x2="193.0" y2="217.1" stroke="var(--accent)" stroke-width="1.5" opacity="1"/></g>
+      <g><title>block 20,459,019: 31 nodes, $2259.92–$2334.15, median $2330.88, spread 318 bps</title><line x1="195.1" y1="310.0" x2="195.1" y2="221.5" stroke="var(--accent)" stroke-width="1.5" opacity="1"/></g>
+      <g><title>block 20,459,021: 31 nodes, $2253.99–$2322.95, median $2317.83, spread 297 bps</title><line x1="197.3" y1="310.0" x2="197.3" y2="227.4" stroke="var(--accent)" stroke-width="1.5" opacity="1"/></g>
+      <g><title>block 20,459,031: 31 nodes, $2315.75–$2353.58, median $2351.81, spread 161 bps</title><line x1="199.4" y1="310.0" x2="199.4" y2="265.3" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,033: 31 nodes, $2331.08–$2373.63, median $2370.17, spread 180 bps</title><line x1="201.5" y1="310.0" x2="201.5" y2="260.1" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,038: 31 nodes, $2326.32–$2357.30, median $2338.26, spread 132 bps</title><line x1="203.6" y1="310.0" x2="203.6" y2="273.2" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,041: 31 nodes, $2319.91–$2358.39, median $2356.36, spread 163 bps</title><line x1="205.8" y1="310.0" x2="205.8" y2="264.6" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,061: 31 nodes, $2306.31–$2363.00, median $2313.79, spread 245 bps</title><line x1="207.9" y1="310.0" x2="207.9" y2="241.9" stroke="var(--accent)" stroke-width="1.5" opacity="1"/></g>
+      <g><title>block 20,459,065: 31 nodes, $2265.99–$2352.57, median $2273.66, spread 381 bps</title><line x1="210.0" y1="310.0" x2="210.0" y2="204.2" stroke="var(--accent)" stroke-width="1.5" opacity="1"/></g>
+      <g><title>block 20,459,068: 31 nodes, $2288.06–$2351.97, median $2300.63, spread 278 bps</title><line x1="212.1" y1="310.0" x2="212.1" y2="232.8" stroke="var(--accent)" stroke-width="1.5" opacity="1"/></g>
+      <g><title>block 20,459,075: 31 nodes, $2303.34–$2333.76, median $2328.46, spread 131 bps</title><line x1="214.3" y1="310.0" x2="214.3" y2="273.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,092: 31 nodes, $2302.40–$2338.37, median $2305.75, spread 156 bps</title><line x1="216.4" y1="310.0" x2="216.4" y2="266.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,108: 31 nodes, $2305.97–$2327.25, median $2318.00, spread 92 bps</title><line x1="218.5" y1="310.0" x2="218.5" y2="284.5" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,108: 31 nodes, $2324.97–$2356.67, median $2354.45, spread 135 bps</title><line x1="220.6" y1="310.0" x2="220.6" y2="272.6" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,113: 31 nodes, $2325.42–$2345.04, median $2337.46, spread 84 bps</title><line x1="222.8" y1="310.0" x2="222.8" y2="286.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,118: 31 nodes, $2343.70–$2354.58, median $2352.32, spread 46 bps</title><line x1="224.9" y1="310.0" x2="224.9" y2="297.1" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,128: 31 nodes, $2338.10–$2370.60, median $2368.09, spread 137 bps</title><line x1="227.0" y1="310.0" x2="227.0" y2="271.9" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,135: 31 nodes, $2353.60–$2364.21, median $2355.40, spread 45 bps</title><line x1="229.1" y1="310.0" x2="229.1" y2="297.5" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,156: 31 nodes, $2336.25–$2358.14, median $2337.87, spread 94 bps</title><line x1="231.2" y1="310.0" x2="231.2" y2="284.0" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,162: 31 nodes, $2345.93–$2353.37, median $2352.11, spread 32 bps</title><line x1="233.4" y1="310.0" x2="233.4" y2="301.2" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,167: 31 nodes, $2329.30–$2347.74, median $2331.20, spread 79 bps</title><line x1="235.5" y1="310.0" x2="235.5" y2="288.0" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,184: 31 nodes, $2334.50–$2348.60, median $2347.28, spread 60 bps</title><line x1="237.6" y1="310.0" x2="237.6" y2="293.3" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,194: 31 nodes, $2332.66–$2339.38, median $2334.51, spread 29 bps</title><line x1="239.7" y1="310.0" x2="239.7" y2="302.0" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,202: 31 nodes, $2332.91–$2358.20, median $2357.27, spread 107 bps</title><line x1="241.9" y1="310.0" x2="241.9" y2="280.2" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,207: 31 nodes, $2341.49–$2347.96, median $2342.65, spread 28 bps</title><line x1="244.0" y1="310.0" x2="244.0" y2="302.3" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,214: 31 nodes, $2341.86–$2349.79, median $2343.41, spread 34 bps</title><line x1="246.1" y1="310.0" x2="246.1" y2="300.6" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,224: 31 nodes, $2328.63–$2341.45, median $2330.70, spread 55 bps</title><line x1="248.2" y1="310.0" x2="248.2" y2="294.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,237: 31 nodes, $2315.34–$2322.32, median $2319.04, spread 30 bps</title><line x1="250.4" y1="310.0" x2="250.4" y2="301.6" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,262: 31 nodes, $2300.82–$2314.81, median $2301.85, spread 61 bps</title><line x1="252.5" y1="310.0" x2="252.5" y2="293.1" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,274: 31 nodes, $2280.57–$2289.91, median $2281.35, spread 41 bps</title><line x1="254.6" y1="310.0" x2="254.6" y2="298.6" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,282: 31 nodes, $2291.39–$2306.52, median $2305.52, spread 66 bps</title><line x1="256.7" y1="310.0" x2="256.7" y2="291.8" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,297: 31 nodes, $2284.12–$2303.33, median $2288.14, spread 84 bps</title><line x1="258.9" y1="310.0" x2="258.9" y2="286.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,302: 31 nodes, $2271.42–$2291.42, median $2273.07, spread 88 bps</title><line x1="261.0" y1="310.0" x2="261.0" y2="285.6" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,307: 31 nodes, $2257.23–$2281.82, median $2258.73, spread 109 bps</title><line x1="263.1" y1="310.0" x2="263.1" y2="279.8" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,317: 31 nodes, $2268.54–$2273.68, median $2272.32, spread 23 bps</title><line x1="265.2" y1="310.0" x2="265.2" y2="303.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,322: 31 nodes, $2249.48–$2258.24, median $2251.98, spread 39 bps</title><line x1="267.4" y1="310.0" x2="267.4" y2="299.2" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,324: 31 nodes, $2218.51–$2265.17, median $2223.04, spread 210 bps</title><line x1="269.5" y1="310.0" x2="269.5" y2="251.7" stroke="var(--accent)" stroke-width="1.5" opacity="1"/></g>
+      <g><title>block 20,459,327: 31 nodes, $2226.15–$2265.17, median $2238.48, spread 174 bps</title><line x1="271.6" y1="310.0" x2="271.6" y2="261.6" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,329: 31 nodes, $2243.95–$2260.72, median $2250.19, spread 75 bps</title><line x1="273.7" y1="310.0" x2="273.7" y2="289.3" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,337: 31 nodes, $2237.42–$2245.61, median $2238.43, spread 37 bps</title><line x1="275.9" y1="310.0" x2="275.9" y2="299.8" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,344: 31 nodes, $2244.20–$2255.41, median $2254.28, spread 50 bps</title><line x1="278.0" y1="310.0" x2="278.0" y2="296.2" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,349: 31 nodes, $2247.85–$2270.24, median $2269.57, spread 99 bps</title><line x1="280.1" y1="310.0" x2="280.1" y2="282.6" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,357: 31 nodes, $2247.28–$2282.00, median $2281.23, spread 152 bps</title><line x1="282.2" y1="310.0" x2="282.2" y2="267.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,364: 31 nodes, $2281.14–$2303.17, median $2300.66, spread 96 bps</title><line x1="284.4" y1="310.0" x2="284.4" y2="283.4" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,372: 31 nodes, $2287.74–$2295.94, median $2288.70, spread 36 bps</title><line x1="286.5" y1="310.0" x2="286.5" y2="300.0" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,404: 31 nodes, $2294.79–$2304.52, median $2301.53, spread 42 bps</title><line x1="288.6" y1="310.0" x2="288.6" y2="298.3" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,427: 31 nodes, $2288.12–$2301.03, median $2289.38, spread 56 bps</title><line x1="290.7" y1="310.0" x2="290.7" y2="294.3" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,437: 31 nodes, $2272.25–$2281.31, median $2274.13, spread 40 bps</title><line x1="292.9" y1="310.0" x2="292.9" y2="298.9" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,449: 30 nodes, $2260.91–$2272.05, median $2261.60, spread 49 bps</title><line x1="295.0" y1="310.0" x2="295.0" y2="296.3" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,479: 31 nodes, $2263.06–$2283.88, median $2282.22, spread 91 bps</title><line x1="297.1" y1="310.0" x2="297.1" y2="284.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,484: 31 nodes, $2285.32–$2296.21, median $2295.18, spread 47 bps</title><line x1="299.2" y1="310.0" x2="299.2" y2="296.8" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,492: 31 nodes, $2293.73–$2309.83, median $2307.44, spread 70 bps</title><line x1="301.3" y1="310.0" x2="301.3" y2="290.6" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,509: 31 nodes, $2310.36–$2321.26, median $2319.81, spread 47 bps</title><line x1="303.5" y1="310.0" x2="303.5" y2="297.0" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,519: 31 nodes, $2315.50–$2318.45, median $2317.01, spread 13 bps</title><line x1="305.6" y1="310.0" x2="305.6" y2="306.5" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,524: 31 nodes, $2318.67–$2329.44, median $2328.75, spread 46 bps</title><line x1="307.7" y1="310.0" x2="307.7" y2="297.2" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,527: 31 nodes, $2318.51–$2336.43, median $2335.76, spread 77 bps</title><line x1="309.8" y1="310.0" x2="309.8" y2="288.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,554: 31 nodes, $2321.13–$2331.35, median $2322.49, spread 44 bps</title><line x1="312.0" y1="310.0" x2="312.0" y2="297.8" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,564: 31 nodes, $2306.15–$2323.36, median $2308.65, spread 75 bps</title><line x1="314.1" y1="310.0" x2="314.1" y2="289.3" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,584: 31 nodes, $2293.36–$2297.72, median $2294.17, spread 19 bps</title><line x1="316.2" y1="310.0" x2="316.2" y2="304.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,637: 30 nodes, $2298.85–$2306.69, median $2306.27, spread 34 bps</title><line x1="318.3" y1="310.0" x2="318.3" y2="300.6" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,654: 31 nodes, $2311.49–$2320.61, median $2320.01, spread 39 bps</title><line x1="320.5" y1="310.0" x2="320.5" y2="299.1" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,761: 31 nodes, $2329.22–$2334.00, median $2333.49, spread 20 bps</title><line x1="322.6" y1="310.0" x2="322.6" y2="304.3" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,811: 31 nodes, $2320.43–$2325.10, median $2322.80, spread 20 bps</title><line x1="324.7" y1="310.0" x2="324.7" y2="304.4" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,866: 31 nodes, $2322.66–$2337.14, median $2335.70, spread 62 bps</title><line x1="326.8" y1="310.0" x2="326.8" y2="292.8" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,896: 31 nodes, $2346.22–$2350.73, median $2350.10, spread 19 bps</title><line x1="329.0" y1="310.0" x2="329.0" y2="304.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,899: 31 nodes, $2345.87–$2368.57, median $2367.19, spread 96 bps</title><line x1="331.1" y1="310.0" x2="331.1" y2="283.4" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,926: 31 nodes, $2372.38–$2383.28, median $2382.08, spread 46 bps</title><line x1="333.2" y1="310.0" x2="333.2" y2="297.3" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,964: 31 nodes, $2367.32–$2373.01, median $2367.87, spread 24 bps</title><line x1="335.3" y1="310.0" x2="335.3" y2="303.3" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,459,983: 31 nodes, $2352.78–$2357.92, median $2354.19, spread 22 bps</title><line x1="337.5" y1="310.0" x2="337.5" y2="303.9" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,029: 31 nodes, $2339.49–$2345.82, median $2339.95, spread 27 bps</title><line x1="339.6" y1="310.0" x2="339.6" y2="302.5" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,049: 31 nodes, $2346.64–$2354.17, median $2353.20, spread 32 bps</title><line x1="341.7" y1="310.0" x2="341.7" y2="301.1" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,104: 31 nodes, $2336.96–$2347.62, median $2338.70, spread 46 bps</title><line x1="343.8" y1="310.0" x2="343.8" y2="297.3" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,116: 31 nodes, $2337.86–$2342.07, median $2339.14, spread 18 bps</title><line x1="346.0" y1="310.0" x2="346.0" y2="305.0" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,146: 31 nodes, $2325.97–$2330.97, median $2327.01, spread 21 bps</title><line x1="348.1" y1="310.0" x2="348.1" y2="304.0" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,154: 31 nodes, $2312.18–$2315.53, median $2313.47, spread 14 bps</title><line x1="350.2" y1="310.0" x2="350.2" y2="306.0" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,174: 31 nodes, $2297.30–$2305.65, median $2298.95, spread 36 bps</title><line x1="352.3" y1="310.0" x2="352.3" y2="299.9" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,189: 31 nodes, $2282.75–$2295.02, median $2284.98, spread 54 bps</title><line x1="354.5" y1="310.0" x2="354.5" y2="295.1" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,201: 31 nodes, $2265.11–$2287.41, median $2268.64, spread 98 bps</title><line x1="356.6" y1="310.0" x2="356.6" y2="282.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,204: 31 nodes, $2272.75–$2284.11, median $2282.20, spread 50 bps</title><line x1="358.7" y1="310.0" x2="358.7" y2="296.2" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,206: 31 nodes, $2280.57–$2297.81, median $2294.97, spread 75 bps</title><line x1="360.8" y1="310.0" x2="360.8" y2="289.1" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,215: 31 nodes, $2285.67–$2313.09, median $2312.00, spread 119 bps</title><line x1="363.0" y1="310.0" x2="363.0" y2="277.1" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,216: 31 nodes, $2297.94–$2308.53, median $2299.86, spread 46 bps</title><line x1="365.1" y1="310.0" x2="365.1" y2="297.2" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,244: 31 nodes, $2302.59–$2317.82, median $2315.73, spread 66 bps</title><line x1="367.2" y1="310.0" x2="367.2" y2="291.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,254: 31 nodes, $2318.15–$2328.36, median $2327.42, spread 44 bps</title><line x1="369.3" y1="310.0" x2="369.3" y2="297.8" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,269: 31 nodes, $2323.46–$2339.70, median $2339.21, spread 69 bps</title><line x1="371.4" y1="310.0" x2="371.4" y2="290.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,276: 31 nodes, $2340.05–$2354.23, median $2353.12, spread 60 bps</title><line x1="373.6" y1="310.0" x2="373.6" y2="293.3" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,341: 31 nodes, $2340.14–$2346.27, median $2341.00, spread 26 bps</title><line x1="375.7" y1="310.0" x2="375.7" y2="302.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,353: 31 nodes, $2320.51–$2335.92, median $2322.20, spread 66 bps</title><line x1="377.8" y1="310.0" x2="377.8" y2="291.6" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,358: 31 nodes, $2329.77–$2342.01, median $2340.74, spread 52 bps</title><line x1="379.9" y1="310.0" x2="379.9" y2="295.5" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,397: 31 nodes, $2327.82–$2338.54, median $2328.60, spread 46 bps</title><line x1="382.1" y1="310.0" x2="382.1" y2="297.2" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,412: 31 nodes, $2325.52–$2331.02, median $2328.95, spread 24 bps</title><line x1="384.2" y1="310.0" x2="384.2" y2="303.4" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,429: 31 nodes, $2313.99–$2321.71, median $2315.06, spread 33 bps</title><line x1="386.3" y1="310.0" x2="386.3" y2="300.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,452: 31 nodes, $2292.57–$2306.83, median $2296.14, spread 62 bps</title><line x1="388.4" y1="310.0" x2="388.4" y2="292.8" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,471: 31 nodes, $2278.00–$2286.58, median $2279.76, spread 38 bps</title><line x1="390.6" y1="310.0" x2="390.6" y2="299.5" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,473: 31 nodes, $2284.81–$2292.26, median $2291.37, spread 33 bps</title><line x1="392.7" y1="310.0" x2="392.7" y2="301.0" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,478: 31 nodes, $2274.78–$2283.01, median $2277.70, spread 36 bps</title><line x1="394.8" y1="310.0" x2="394.8" y2="300.0" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <g><title>block 20,460,483: 31 nodes, $2284.76–$2297.39, median $2295.66, spread 55 bps</title><line x1="396.9" y1="310.0" x2="396.9" y2="294.7" stroke="currentColor" stroke-width="1.5" opacity="0.6"/></g>
+      <circle cx="186.6" cy="68.8" r="4.5" fill="var(--accent)"/>
+      <text x="196.6" y="72.8" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="var(--accent)">868 bps &middot; block 20,458,998</text>
+      <text x="196.6" y="86.8" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--accent)" opacity="0.85">nodes saw $2,141&ndash;$2,335 &middot; feed said $2,234</text>
+      <text x="398.0" y="338" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.6">median 49.5 &middot; p90 212.8 &middot; max 868.5 bps</text>
+      <text x="422.0" y="44" font-family="IBM Plex Sans Condensed, sans-serif" font-size="12" font-weight="700" fill="currentColor" opacity="0.8">CALM &middot; ~25 Aug 2024 &middot; 18 rounds</text>
+      <g><title>block 20,603,061: 31 nodes, $2760.43–$2761.92, median $2761.50, spread 5 bps</title><line x1="431.5" y1="310.0" x2="431.5" y2="308.5" stroke="currentColor" stroke-width="2" opacity="0.6"/></g>
+      <g><title>block 20,603,360: 31 nodes, $2768.00–$2768.29, median $2768.24, spread 1 bps</title><line x1="450.5" y1="310.0" x2="450.5" y2="309.7" stroke="currentColor" stroke-width="2" opacity="0.6"/></g>
+      <g><title>block 20,603,658: 31 nodes, $2763.11–$2764.06, median $2763.55, spread 3 bps</title><line x1="469.5" y1="310.0" x2="469.5" y2="309.0" stroke="currentColor" stroke-width="2" opacity="0.6"/></g>
+      <g><title>block 20,603,953: 30 nodes, $2756.07–$2757.29, median $2756.52, spread 4 bps</title><line x1="488.5" y1="310.0" x2="488.5" y2="308.8" stroke="currentColor" stroke-width="2" opacity="0.6"/></g>
+      <g><title>block 20,604,060: 31 nodes, $2741.64–$2744.44, median $2742.07, spread 10 bps</title><line x1="507.5" y1="310.0" x2="507.5" y2="307.2" stroke="currentColor" stroke-width="2" opacity="0.6"/></g>
+      <g><title>block 20,604,249: 31 nodes, $2744.17–$2744.89, median $2744.55, spread 3 bps</title><line x1="526.5" y1="310.0" x2="526.5" y2="309.3" stroke="currentColor" stroke-width="2" opacity="0.6"/></g>
+      <g><title>block 20,604,276: 31 nodes, $2743.84–$2744.75, median $2744.28, spread 3 bps</title><line x1="545.5" y1="310.0" x2="545.5" y2="309.1" stroke="currentColor" stroke-width="2" opacity="0.6"/></g>
+      <g><title>block 20,604,547: 31 nodes, $2752.92–$2753.58, median $2753.29, spread 2 bps</title><line x1="564.5" y1="310.0" x2="564.5" y2="309.3" stroke="currentColor" stroke-width="2" opacity="0.6"/></g>
+      <g><title>block 20,604,850: 31 nodes, $2755.68–$2756.75, median $2756.33, spread 4 bps</title><line x1="583.5" y1="310.0" x2="583.5" y2="308.9" stroke="currentColor" stroke-width="2" opacity="0.6"/></g>
+      <g><title>block 20,604,852: 31 nodes, $2756.10–$2756.98, median $2756.63, spread 3 bps</title><line x1="602.5" y1="310.0" x2="602.5" y2="309.1" stroke="currentColor" stroke-width="2" opacity="0.6"/></g>
+      <g><title>block 20,605,146: 31 nodes, $2753.47–$2753.88, median $2753.63, spread 2 bps</title><line x1="621.5" y1="310.0" x2="621.5" y2="309.6" stroke="currentColor" stroke-width="2" opacity="0.6"/></g>
+      <g><title>block 20,605,449: 31 nodes, $2752.33–$2754.38, median $2752.58, spread 7 bps</title><line x1="640.5" y1="310.0" x2="640.5" y2="307.9" stroke="currentColor" stroke-width="2" opacity="0.6"/></g>
+      <g><title>block 20,605,742: 31 nodes, $2752.97–$2753.43, median $2753.28, spread 2 bps</title><line x1="659.5" y1="310.0" x2="659.5" y2="309.5" stroke="currentColor" stroke-width="2" opacity="0.6"/></g>
+      <g><title>block 20,605,948: 31 nodes, $2766.25–$2768.06, median $2767.70, spread 7 bps</title><line x1="678.5" y1="310.0" x2="678.5" y2="308.2" stroke="currentColor" stroke-width="2" opacity="0.6"/></g>
+      <g><title>block 20,606,039: 31 nodes, $2761.99–$2762.28, median $2762.16, spread 1 bps</title><line x1="697.5" y1="310.0" x2="697.5" y2="309.7" stroke="currentColor" stroke-width="2" opacity="0.6"/></g>
+      <g><title>block 20,606,337: 31 nodes, $2765.11–$2765.73, median $2765.62, spread 2 bps</title><line x1="716.5" y1="310.0" x2="716.5" y2="309.4" stroke="currentColor" stroke-width="2" opacity="0.6"/></g>
+      <g><title>block 20,606,635: 31 nodes, $2762.43–$2763.27, median $2762.61, spread 3 bps</title><line x1="735.5" y1="310.0" x2="735.5" y2="309.2" stroke="currentColor" stroke-width="2" opacity="0.6"/></g>
+      <g><title>block 20,606,932: 31 nodes, $2763.67–$2765.00, median $2764.25, spread 5 bps</title><line x1="754.5" y1="310.0" x2="754.5" y2="308.7" stroke="currentColor" stroke-width="2" opacity="0.6"/></g>
+      <text x="764.0" y="338" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.6">median 3.3 &middot; p90 6.5 &middot; max 10.2 bps</text>
+      </svg>
+    <figcaption><b>The second kill test: the incumbent&rsquo;s own witnesses.</b> Chainlink&rsquo;s aggregator emits every node&rsquo;s observation in <code>NewTransmission</code> and publishes only the median &mdash; so the disagreement SELISIH exists to keep is already signed and on-chain, and discarded. At block 20,458,998 the 31 nodes saw $2,141 to $2,335 and the feed said $2,233.80; six nodes were more than 200 bps from that number. Median node spread is 15&times; higher under stress; the maximum is 85&times;. Day one, SELISIH&rsquo;s witnesses are these nodes, decoded &mdash; nothing to recruit. Hover any bar for its round.</figcaption>
+  </figure>
+
+  <section class="col">
+    <h2>Why a single-writer log is not evidence</h2>
+    <p>When a lending market has a bad day, the post-mortem comes from the protocol&rsquo;s own logs &mdash; written by the party the investigation is about, from a database it controls, weeks later. Risk committees deciding on reimbursement, underwriters settling a claim, and liquidated borrowers all need the same thing and none of them can get it.</p>
+    <p class="pull">The gap is not that there is no data. It is that there is no data anyone on the other side of the dispute will accept.</p>
+  </section>
+
+  <section class="grid3">
+    <div class="card">
+      <h3>Divergence is the alarm</h3>
+      <p>Seven witnesses reporting the same number is noise. One reporting something else is a signal &mdash; a bad feed, a partial view, or an agenda. The product surfaces <b>the spread, not the value</b>, and every reading is attributable.</p>
+    </div>
+    <div class="card">
+      <h3>Silence is evidence</h3>
+      <p>A witness registration is <b>alive only while it keeps being renewed</b>. So &ldquo;w7 did not report in round 812&rdquo; is a checkable fact rather than a missing row. A watcher that goes quiet exactly when a market blows up cannot hide it.</p>
+    </div>
+    <div class="card">
+      <h3>Lifetime is a bet</h3>
+      <p>Cost is size &times; lifetime, so a witness paying for ninety days on a reading is <b>staking money on being right</b>. And a witness letting a damning reading lapse is making a visible choice. Both are queryable.</p>
+    </div>
+  </section>
+
+  <section class="col">
+    <h2>Only the owner can extend &mdash; and that is the best thing about it</h2>
+    <p>Arkiv permits only an entity&rsquo;s owner to update, delete or extend it. A first draft had a dispute reaching in and extending every witness&rsquo;s snapshot; that is simply not possible, and finding out reshaped the design around a better idea.</p>
+    <p><b>Retention is never done <i>to</i> evidence by an interested party.</b> Each witness funds its own lifetime, priced in storage, which turns conviction into the numeric attribute <code>fundedDays</code>. Everyone else preserves what they care about by writing their own <code>EvidencePin</code> &mdash; their entity, their cost, their name on it &mdash; carrying the copy and the original&rsquo;s tx hash. Expiry removes an entity from the query surface <b>without erasing on-chain history</b>, so a pin stays checkable against the original write long after the original has left the index.</p>
+    <p class="pull">Nobody can destroy someone else&rsquo;s evidence. Nobody needs permission to save it.</p>
+  </section>
+
+  <section class="col">
+    <h2>The free-rider hole, and the entity that closes it</h2>
+    <p>There is a hole big enough to hollow the whole product out: <b>the cheapest way to be a witness is to read what witness 1 published and copy it.</b> A copier costs nothing to run, never diverges, never gets flagged, and quietly turns seven independent observers into one observer and six mirrors &mdash; while the board keeps reporting reassuring agreement.</p>
+    <p class="pull">Consensus produced by copying looks exactly like consensus produced by correctness.</p>
+    <p>So each round runs in two beats. Witnesses first write a tiny <code>Commit</code> carrying only a salted hash; once the commit window closes they publish the snapshot with the salt. Arkiv&rsquo;s own guidance is to keep secrets off and <b>store commitments instead</b> &mdash; nothing confidential is written, and the reading is public a minute later anyway. A witness cannot copy a number nobody has revealed, and one that reveals a value not matching its commit has published a discrepancy under its own key that anyone can check forever.</p>
+    <p style="color: var(--muted);">The cost is one cheap write per round and a minute of latency &mdash; affordable precisely because SELISIH is off the execution hot path. On a hot path this would be unacceptable; here it is free.</p>
+  </section>
+
+  <figure>
+    <svg viewBox="0 0 780 330" role="img" aria-label="Entity model: RiskSnapshot at the centre joined by shared attribute keys to WitnessRegistration, RosterEpoch, Dispute and Resolution, with the Dispute extending snapshot lifetimes.">
+      <defs>
+        <marker id="sl-a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+        </marker>
+        <marker id="sl-a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/>
+        </marker>
+      </defs>
+
+      <rect x="270" y="118" width="230" height="92" fill="var(--surface-2)" stroke="currentColor" stroke-width="2"/>
+      <text x="385" y="150" text-anchor="middle" font-family="IBM Plex Sans Condensed, sans-serif" font-size="17" font-weight="700" fill="currentColor">RiskSnapshot</text>
+      <text x="385" y="171" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.6">append-only &middot; never updated</text>
+      <text x="385" y="192" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--accent)" font-weight="600">lifetime 72h</text>
+
+      <rect x="20" y="30" width="190" height="72" fill="none" stroke="currentColor" opacity="0.8"/>
+      <text x="115" y="58" text-anchor="middle" font-family="IBM Plex Sans Condensed, sans-serif" font-size="14" font-weight="600" fill="currentColor">WitnessRegistration</text>
+      <text x="115" y="78" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.6">lifetime 7d &middot; heartbeat</text>
+
+      <rect x="20" y="226" width="190" height="72" fill="none" stroke="currentColor" opacity="0.8"/>
+      <text x="115" y="254" text-anchor="middle" font-family="IBM Plex Sans Condensed, sans-serif" font-size="14" font-weight="600" fill="currentColor">RosterEpoch</text>
+      <text x="115" y="274" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.6">lifetime 1y &middot; append-only</text>
+
+      <rect x="560" y="30" width="190" height="72" fill="none" stroke="var(--accent)" stroke-width="2"/>
+      <text x="655" y="58" text-anchor="middle" font-family="IBM Plex Sans Condensed, sans-serif" font-size="14" font-weight="600" fill="var(--accent)">Dispute</text>
+      <text x="655" y="78" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.6">one writer &middot; window +30d</text>
+
+      <rect x="560" y="226" width="190" height="72" fill="none" stroke="currentColor" opacity="0.8"/>
+      <text x="655" y="254" text-anchor="middle" font-family="IBM Plex Sans Condensed, sans-serif" font-size="14" font-weight="600" fill="currentColor">Resolution</text>
+      <text x="655" y="274" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.6">append-only &middot; binds nothing</text>
+
+      <line x1="210" y1="72" x2="270" y2="136" stroke="currentColor" opacity="0.75" marker-end="url(#sl-a2)"/>
+      <text x="222" y="106" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.7">witness</text>
+
+      <line x1="210" y1="258" x2="270" y2="196" stroke="currentColor" opacity="0.75" marker-end="url(#sl-a2)"/>
+      <text x="216" y="234" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.7">market + epoch</text>
+
+      <line x1="560" y1="76" x2="500" y2="136" stroke="var(--accent)" stroke-width="2" marker-end="url(#sl-a3)"/>
+      <text x="497" y="104" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--accent)" font-weight="600">extendEntity</text>
+
+      <line x1="655" y1="102" x2="655" y2="226" stroke="currentColor" opacity="0.75" marker-end="url(#sl-a2)"/>
+      <text x="666" y="168" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.7">disputeId</text>
+
+      <text x="385" y="252" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="currentColor" opacity="0.55">joined by shared attribute keys &mdash; there are no joins</text>
+      <text x="385" y="274" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.45">primary key: (market, round, witness)</text>
+    </svg>
+    <figcaption><b>Five entity types, four lifetimes, one deliberate correction.</b> <code>RosterEpoch</code> exists because registrations expire in days while disputed snapshots live for months &mdash; so &ldquo;who was on the roster in round 812?&rdquo; cannot be answered by querying live registrations. It stores that fact while it is still true. The orange edge is the only write that touches an existing entity: a dispute extending the evidence it is about.</figcaption>
+  </figure>
+
+  <figure>
+    <svg viewBox="0 0 780 292" role="img" aria-label="One reading, three fates: the witness funds the seventy-two hour floor and it lapses; the witness funds ninety days as a costly signal of conviction; or a third party writes their own EvidencePin, at their own cost, because they cannot extend someone else's entity.">
+      <defs>
+        <marker id="sl-a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/>
+        </marker>
+      </defs>
+
+      <text x="0" y="16" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.55" letter-spacing="1.4">ONE READING &middot; THREE FATES &middot; WHO PAYS DECIDES</text>
+
+      <text x="2" y="60" font-family="IBM Plex Sans, sans-serif" font-size="13" fill="currentColor" opacity="0.7">floor</text>
+      <text x="2" y="76" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity="0.45">witness pays 72h</text>
+      <rect x="140" y="52" width="110" height="18" fill="currentColor" opacity="0.3"/>
+      <line x1="250" y1="44" x2="250" y2="78" stroke="currentColor" opacity="0.5"/>
+      <text x="262" y="65" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.6">lapses &mdash; and letting it lapse is an act</text>
+
+      <text x="0" y="128" font-family="IBM Plex Sans, sans-serif" font-size="13" fill="var(--accent)" font-weight="600">conviction</text>
+      <text x="2" y="144" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--accent)" opacity="0.8">witness pays 90d</text>
+      <rect x="140" y="120" width="560" height="18" fill="var(--accent)" opacity="0.85"/>
+      <text x="430" y="133" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--bg)" font-weight="600">fundedDays = 90</text>
+      <text x="712" y="133" font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--accent)" font-weight="600">&rarr;</text>
+
+      <text x="2" y="196" font-family="IBM Plex Sans, sans-serif" font-size="13" fill="currentColor" opacity="0.7">pinned</text>
+      <text x="2" y="212" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity="0.45">reader pays</text>
+      <rect x="140" y="188" width="70" height="18" fill="currentColor" opacity="0.18"/>
+      <rect x="210" y="188" width="530" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="5 3" opacity="0.75"/>
+      <line x1="210" y1="162" x2="210" y2="184" stroke="currentColor" opacity="0.7" marker-end="url(#sl-a4)"/>
+      <text x="222" y="156" text-anchor="start" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.75">EvidencePin &mdash; a different entity, a different owner</text>
+
+      <line x1="140" y1="238" x2="740" y2="238" stroke="currentColor" opacity="0.25"/>
+      <line x1="140" y1="234" x2="140" y2="242" stroke="currentColor" opacity="0.5"/>
+      <line x1="250" y1="234" x2="250" y2="242" stroke="currentColor" opacity="0.5"/>
+      <line x1="700" y1="234" x2="700" y2="242" stroke="currentColor" opacity="0.5"/>
+      <text x="140" y="258" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.55">write</text>
+      <text x="250" y="258" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.55">+72h</text>
+      <text x="700" y="258" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="currentColor" opacity="0.55">+90d</text>
+      <text x="140" y="282" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="currentColor" opacity="0.5">Almost every reading is the top lane. That is what makes the other two affordable.</text>
+    </svg>
+    <figcaption><b>Owner-only extension, turned into the mechanic.</b> A disputant cannot preserve a witness&rsquo;s reading, so retention is never done <i>to</i> evidence by an interested party. The witness bets on its own reading by funding its lifetime; anyone else who needs it kept writes their own pin and pays for it. The pin carries the original&rsquo;s tx hash, and expiry never touched on-chain history &mdash; so it stays checkable long after the original left the index.</figcaption>
+  </figure>
+
+  <section class="col" style="max-width: 100%;">
+    <h2>The queries the product lives on</h2>
+    <p class="lede" style="font-size: 1rem;">String attributes support <code>eq()</code> only; ranges need integers. Results come back newest-first with no server-side ordering, so every filter below is narrow enough that a page is a real answer rather than an arbitrary slice.</p>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Screen</th><th>Predicate</th><th>Why it holds</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>Divergence board</b></td>
+            <td><code>eq(market, M) &and; eq(round, 812)</code></td>
+            <td>Bounded by roster size, not position count. Needs no ordering at all.</td>
+          </tr>
+          <tr>
+            <td><b>Who is missing</b></td>
+            <td><code>count</code> of the above vs <code>count</code> of live registrations</td>
+            <td>Two counts, no fetch. The dashboard never pulls what it only needs to tally.</td>
+          </tr>
+          <tr>
+            <td><b>Witness track record</b></td>
+            <td><code>eq(witness, 0x&hellip;) &and; gte(severityTier, 3)</code><br>and <code>eq(vindicatedWitness, 0x&hellip;)</code></td>
+            <td>Two numbers, never one. Times it broke from its peers, and times it broke from them <b>and was right</b> &mdash; because a reputation query that only counts disagreement punishes the best witness in the system.</td>
+          </tr>
+          <tr>
+            <td><b>Conviction</b></td>
+            <td><code>eq(market, M) &and; gte(fundedDays, 30)</code></td>
+            <td>Readings their own authors paid to keep well past the dispute window.</td>
+          </tr>
+          <tr>
+            <td><b>Danger scan</b></td>
+            <td><code>eq(market, M) &and; lt(healthFactorBps, 10500) &and; gte(round, N)</code></td>
+            <td>Health factor is an integer in basis points. As text it would be unqueryable.</td>
+          </tr>
+          <tr>
+            <td><b>Open disputes &rarr; pin queue</b></td>
+            <td><code>eq(statusCode, 0) &and; gte(deadlineTs, now)</code>, then <code>lt(expiresAtTs, deadlineTs)</code></td>
+            <td>The readings that will lapse <b>before the dispute they matter to is resolved</b>. That list is the call to action: anyone who cares can pin them, at their own cost, before they go.</td>
+          </tr>
+          <tr>
+            <td><b>Incident pull</b></td>
+            <td><code>eq(market, M) &and; gte(observedTs, T0) &and; lte(observedTs, T1)</code></td>
+            <td>Cursor-paginated. Verifiable by the reader without asking the protocol for anything.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr>
+
+  <section class="col" style="max-width: 100%;">
+    <h2>The Arkiv surface this design uses</h2>
+    <p class="lede" style="font-size: 1rem;">Every primitive below does real work. The two that are <em>not</em> used are listed too, because leaving them out was a decision.</p>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Primitive</th><th>Where it does work</th></tr></thead>
+        <tbody>
+          <tr><td><code>$creator</code></td><td>Attribution on every reading &mdash; the reputation primitive. Immutable, so a track record cannot be sold.</td></tr>
+          <tr><td><code>$owner</code> &middot; <code>changeOwnership</code></td><td>Operational control of a registration, separated from authorship. Keys rotate and desks get acquired; authorship does not move.</td></tr>
+          <tr><td class="hit"><b>Owner-only extension</b></td><td class="hit">The constraint the design is built on. Nobody can preserve or destroy someone else&rsquo;s evidence &mdash; so each party funds what it believes.</td></tr>
+          <tr><td class="hit"><b>Cost = size &times; lifetime</b></td><td class="hit">Turned into <code>fundedDays</code>: conviction priced in storage, and filterable. A conventional database charges the writer nothing for keeping a row, so this signal cannot exist there.</td></tr>
+          <tr><td><code>expiresIn</code></td><td>Five differentiated lifetimes: 72h floor snapshots &middot; 7d registrations &middot; window+30d disputes &middot; 1y roster epochs &middot; pinner-funded pins.</td></tr>
+          <tr><td><code>extendEntity</code></td><td>The witness heartbeat, and a witness choosing to stand behind its own reading.</td></tr>
+          <tr><td><code>mutateEntities</code></td><td>Snapshot plus roster update in one batch, chunked under the 1000-operation cap.</td></tr>
+          <tr><td><code>updateEntity</code></td><td>One entity type only &mdash; <code>Dispute</code> &mdash; where a single writer makes full-replace safe.</td></tr>
+          <tr><td class="hit"><code>deleteEntity</code></td><td class="hit">Deliberately unused. A system where evidence can be removed on request is not an evidence system.</td></tr>
+          <tr><td>Numeric attributes</td><td>Prices &times;1e8, debt &times;1e6, health in basis points. The scale is in the attribute name.</td></tr>
+          <tr><td>String attributes</td><td><code>market</code>, <code>witness</code>, <code>kind</code> &mdash; enumerated slugs, never free text, because <code>eq()</code> is all they support.</td></tr>
+          <tr><td>Counts &middot; cursors</td><td>&ldquo;Who is missing&rdquo; without fetching rows; cursor pagination on the incident pull.</td></tr>
+          <tr><td>Tx hashes</td><td>Rendered beside each reading, so the reader verifies rather than trusts.</td></tr>
+          <tr><td>Hash commitments</td><td>The commit round. Arkiv&rsquo;s guidance is to store commitments, not secrets &mdash; a digest is exactly that.</td></tr>
+          <tr><td>Project namespace</td><td><code>app: "selisih"</code> on every entity and first in every predicate. A shared public database has no other separation, and <code>kind: "snapshot"</code> is a word other projects will reach for too.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color: var(--muted); margin-top: 1.5rem; max-width: 42rem;"><b>Who pays.</b> Witnesses pay for their own readings &mdash; a cost the writer bears is what makes <code>fundedDays</code> mean anything. Pinners pay for pins. The roster epoch is written once a day by whoever runs the board. <b>Nobody pays for anyone else&rsquo;s opinion, which is the only reason the cost signal is readable at all.</b></p>
+  </section>
+
+  <section class="col">
+    <h2>What this design would ask of Arkiv</h2>
+    <p>The roadmap says the phase after Devcon 8 is decided with the teams using Arkiv, and the current architecture came out of hackathon feedback. So here is the feedback this design actually earned &mdash; from friction, not from a wishlist.</p>
+    <ul>
+      <li><b>Third-party-fundable lifetime extension.</b> Owner-only extension is the right default and it produced the best mechanic here. But <code>EvidencePin</code> exists only because a reader who wants a reading preserved must <i>duplicate</i> it rather than fund it, storing the same bytes twice. Letting a non-owner pay to extend, while gaining no right to modify, would remove that duplication and keep every guarantee intact.</li>
+      <li><b>A queryable creation block.</b> Attribution is immutable via <code>$creator</code>, but &ldquo;was this attribute backdated relative to when it was written?&rdquo; needs the transaction receipt, entity by entity. As a numeric system attribute it would be a range predicate, and consistency checking across a whole register would become a query instead of an audit.</li>
+    </ul>
+    <p style="color: var(--muted);">Neither is needed for SELISIH to work as designed. Both would make it smaller.</p>
+  </section>
+
+  <hr>
+
+  <section class="two">
+    <div class="col">
+      <h2>Why Arkiv, not Postgres</h2>
+      <ul>
+        <li><b>The writers are adversarial to each other.</b> Witnesses compete, disputants have money at stake, and the protocol under examination has the strongest motive of anyone to shape the record. There is no operator all of them would accept as custodian &mdash; and a conventional database requires exactly that operator to exist.</li>
+        <li><b>The reader must verify without permission.</b> &ldquo;Trust our API, this row came from witness 4&rdquo; is worth nothing in the one situation the product exists for.</li>
+        <li><b>Expiry has to be a guarantee.</b> The retention argument, and with it the cost model, rests on that difference. Expiry removes an entity from the query surface without erasing on-chain history &mdash; exactly the semantics evidence needs.</li>
+      </ul>
+      <p style="color: var(--muted);">Remove any one and SELISIH is a worse Grafana.</p>
+      <p><b>The fourth pillar, stated precisely.</b> Block production stays centralised through November 2026 per the roadmap. SELISIH relies on the <b>Ethereum anchor</b>, not on decentralised sequencing: the operator can order or refuse writes but cannot rewrite an anchored <code>$creator</code> or tx hash without it showing against L1. Verifiability now; censorship-resistance is a later phase and is not claimed.</p>
+    </div>
+    <div class="col">
+      <h2>What deliberately stays off</h2>
+      <ul>
+        <li><b>Execution.</b> No liquidations, no matching, no feed anyone trades against. Nothing in DeFi should block on this.</li>
+        <li><b>Aggregation.</b> The median is computed in the client and never written. This is the one omission that is load-bearing rather than merely prudent.</li>
+        <li><b>Enforcement.</b> Arkiv answers queries; it never executes logic. Bonds live in a contract &mdash; SELISIH supplies the evidence a slashing decision is made <i>from</i>.</li>
+        <li><b>Raw feed bundles.</b> Payloads are capped summaries behind a <code>sourceHash</code>.</li>
+        <li><b>Real-time alerting.</b> Change events are polled, not pushed. Arkiv is where the claim is filed, not the pager.</li>
+      </ul>
+    </div>
+  </section>
+
+  <hr>
+
+
+  <section class="col" style="max-width: 100%;">
+    <h2>Entity-model sketch in TypeScript</h2>
+    <p class="lede" style="font-size: 1rem;">Offline design, not a deployment &mdash; the fundamentals say sketching with <code>@arkiv-network/sdk</code> is fine. <b>It type-checks with <code>tsc --strict</code> against the published <code>@arkiv-network/sdk@0.7.0</code> package</b> &mdash; installed from npm, not summarised from docs. That check corrected the first draft in four places: the API is client-based (<code>publicClient.select().where().limit().fetch()</code>, operators from <code>@arkiv-network/sdk/query</code>), attributes are an array of <code>{key, value}</code>, <code>contentType</code> is required, and <code>select()</code> returns a projected type rather than a full <code>Entity</code>. It also surfaced <code>.createdBy()</code>, <code>not(key)</code>, <code>validAtBlock()</code>, <code>createdAtBlock</code> metadata, and <code>cost</code> in the on-chain events &mdash; none of which the summary docs mention.</p>
+    <details style="background: var(--surface); border: 1px solid var(--rule); padding: 1rem 1.25rem;">
+      <summary style="cursor: pointer; font-weight: 600;">selisih.sketch.ts &mdash; click to expand</summary>
+      <pre style="overflow-x: auto; font-size: 0.78rem; line-height: 1.5; margin: 1rem 0 0; padding: 0; background: transparent;"><code>// SELISIH — entity-model sketch, type-checked against the REAL @arkiv-network/sdk@0.7.0 package.
+// Offline design only: no client is ever connected here, and nothing is deployed.
+// `tsc --strict` passes against the published types (output reproduced in the write-up).
+
+import { createPublicClient, createWalletClient, type Attribute } from &quot;@arkiv-network/sdk&quot;;
+import { eq, gte, lte, lt, not, type Predicate } from &quot;@arkiv-network/sdk/query&quot;;
+import type { Hex } from &quot;viem&quot;;
+
+// Clients are constructed by the app, never here. Types only.
+type Pub = ReturnType&lt;typeof createPublicClient&gt;;
+type Wal = ReturnType&lt;typeof createWalletClient&gt;;
+type HasAttrs = { readonly attributes: Attribute[] };   // select() returns a PROJECTED type, not full Entity
+
+// ---------- constants ----------
+const APP = &quot;selisih&quot;;                        // project namespace — on EVERY entity, first in EVERY predicate
+const CT = &quot;application/json&quot;;                // contentType is required by CreateEntityParameters
+const SNAPSHOT_FLOOR_SEC = 259_200;           // 72h floor; the witness may fund longer — that is the bet
+const COMMIT_SEC = 86_400;                    // 24h
+const REGISTRATION_SEC = 604_800;             // 7d heartbeat; lapsing IS deregistration (emits ArkivEntityExpired)
+const ROSTER_EPOCH_SEC = 31_536_000;          // 1y
+const PIN_DEFAULT_SEC = 31_536_000;           // 1y, pinner chooses and pays
+const PAGE = 200;                             // SDK hard cap per page
+
+// expiresIn must be a positive multiple of 2 (2-second blocks) or the SDK throws InvalidExpirationError
+const even = (s: number) =&gt; (s % 2 === 0 ? s : s + 1);
+// attributes are an ARRAY of { key, value }; value is string | number (numbers must be integers)
+const attrs = (o: Record&lt;string, string | number&gt;): Attribute[] =&gt; Object.entries(o).map(([key, value]) =&gt; ({ key, value }));
+const attr = (e: HasAttrs, key: string) =&gt; e.attributes.find(a =&gt; a.key === key)?.value;
+const enc = (v: unknown) =&gt; new TextEncoder().encode(JSON.stringify(v));
+const now = () =&gt; Math.floor(Date.now() / 1000);
+
+// `.count()` in 0.7.0 is the length of ONE page (≤200). For anything that can exceed a page, sum pages.
+async function countAll(p: Pub, preds: Predicate[]) {
+  const res = await p.select({ key: true }).where(preds).limit(PAGE).fetch();
+  let total = res.entities.length;
+  while (res.hasNextPage()) { await res.next(); total += res.entities.length; }   // next() mutates in place
+  return total;
+}
+
+// ---------- 1. commit → reveal (closes the copy-the-leader hole) ----------
+export async function commit(w: Wal, market: string, round: number, digest: string) {
+  return w.createEntity({
+    payload: new Uint8Array(0), contentType: CT, expiresIn: COMMIT_SEC,
+    attributes: attrs({ app: APP, kind: &quot;commit&quot;, market, round, digest, committedTs: now() }),
+  });
+}
+
+export async function reveal(w: Wal, s: {
+  market: string; round: number; blockNumber: number; observedTs: number;
+  priceE8: number; healthFactorBps: number; totalDebtE6: number; collateralE6: number;
+  atRiskCount: number; deviationBps: number; severityTier: 0 | 1 | 2 | 3 | 4; sourceHash: string;
+  salt: string; supersedesRound?: number;
+}, topK: unknown, fundedDays = 3) {
+  const expiresIn = even(Math.max(SNAPSHOT_FLOOR_SEC, fundedDays * 86_400));
+  const { supersedesRound, ...rest } = s;
+  // No `witness` attribute: the SDK exposes `.createdBy()` and `entity.creator` natively, so mirroring
+  // $creator into an attribute is redundant. The earlier draft did that and was wrong.
+  // The cost actually paid for `expiresIn` is emitted on-chain in ArkivEntityCreated(..., cost) —
+  // so `fundedDays` is checkable against the event, not merely self-reported.
+  return w.createEntity({
+    payload: enc(topK), contentType: CT, expiresIn,
+    attributes: attrs({ app: APP, kind: &quot;snapshot&quot;, ...rest, fundedDays, expiresAtTs: now() + expiresIn,
+                        ...(supersedesRound !== undefined ? { supersedesRound } : {}) }),
+  });
+}
+
+// ---------- 2. the divergence board — Q1 + Q2 ----------
+export async function divergence(p: Pub, market: string, round: number) {
+  const res = await p.select({ key: true, creator: true, attributes: true, expiresAtBlock: true, createdAtBlock: true })
+    .where(eq(&quot;app&quot;, APP), eq(&quot;kind&quot;, &quot;snapshot&quot;), eq(&quot;market&quot;, market), eq(&quot;round&quot;, round),
+           not(&quot;supersedesRound&quot;))                        // `not(key)` = attribute ABSENT → originals only
+    .limit(PAGE).fetch();
+  const rows = res.entities;                               // bounded by roster size → one page holds it
+  const hf = rows.map(r =&gt; Number(attr(r, &quot;healthFactorBps&quot;))).sort((a, b) =&gt; a - b);
+  const median = hf[Math.floor(hf.length / 2)];            // computed client-side and NEVER written
+  const registered = await p.select({ key: true })
+    .where(eq(&quot;app&quot;, APP), eq(&quot;kind&quot;, &quot;witness&quot;), eq(&quot;market&quot;, market)).limit(PAGE).count();
+  return { rows, median, missing: registered - rows.length };
+}
+
+// ---------- 3. reputation as two numbers — Q3 (native createdBy, not a mirrored attribute) ----------
+export async function trackRecord(p: Pub, witness: Hex) {
+  const broke = await countAllBy(p, witness, [eq(&quot;app&quot;, APP), eq(&quot;kind&quot;, &quot;snapshot&quot;), gte(&quot;severityTier&quot;, 3)]);
+  const vindicated = await countAll(p, [eq(&quot;app&quot;, APP), eq(&quot;kind&quot;, &quot;resolution&quot;), eq(&quot;vindicatedWitness&quot;, witness)]);
+  return { broke, vindicated };                            // one number alone punishes the best witness
+}
+async function countAllBy(p: Pub, creator: Hex, preds: Predicate[]) {
+  const res = await p.select({ key: true }).createdBy(creator).where(preds).limit(PAGE).fetch();
+  let total = res.entities.length;
+  while (res.hasNextPage()) { await res.next(); total += res.entities.length; }
+  return total;
+}
+
+// ---------- 4. pin queue — Q5: readings that lapse before their dispute resolves ----------
+export async function pinQueue(p: Pub, market: string, roundFrom: number, roundTo: number, deadlineTs: number) {
+  const res = await p.select({ key: true, creator: true, attributes: true, payload: true })
+    .where(eq(&quot;app&quot;, APP), eq(&quot;kind&quot;, &quot;snapshot&quot;), eq(&quot;market&quot;, market),
+           gte(&quot;round&quot;, roundFrom), lte(&quot;round&quot;, roundTo), lt(&quot;expiresAtTs&quot;, deadlineTs))
+    .limit(PAGE).fetch();
+  return res.entities;
+}
+
+// Only the OWNER may extend, so a reader preserves evidence by writing their OWN entity.
+export async function pin(w: Wal, original: HasAttrs &amp; { readonly creator: Hex; readonly payload: Uint8Array },
+                          originTxHash: Hex, expiresIn = PIN_DEFAULT_SEC) {
+  return w.createEntity({
+    payload: original.payload, contentType: CT, expiresIn: even(expiresIn),
+    attributes: attrs({ app: APP, kind: &quot;pin&quot;, market: String(attr(original, &quot;market&quot;)),
+                        round: Number(attr(original, &quot;round&quot;)), pinnedWitness: original.creator,
+                        originTxHash, pinnedTs: now(), expiresAtTs: now() + expiresIn }),
+  });
+}
+
+// ---------- 5. heartbeat — a witness stands behind its own registration ----------
+export async function heartbeat(w: Wal, registrationKey: Hex) {
+  return w.extendEntity({ entityKey: registrationKey, expiresIn: REGISTRATION_SEC });
+}
+
+// ---------- 6. daily roster epoch — ONE atomic tx ----------
+export async function rosterEpoch(w: Wal, market: string, epoch: number, roundFrom: number, roundTo: number, witnesses: Hex[]) {
+  return w.mutateEntities({                                // ≤1000 ops per tx; chunk beyond that
+    creates: [{
+      payload: enc(witnesses), contentType: CT, expiresIn: ROSTER_EPOCH_SEC,
+      attributes: attrs({ app: APP, kind: &quot;roster&quot;, market, epoch, roundFrom, roundTo, witnessCount: witnesses.length }),
+    }],
+  });
+}
+
+// ---------- 7. &quot;who was on the roster at round 812?&quot; — the upgrade path ----------
+// The builder exposes validAtBlock(). IF the network serves historical state there, this replaces
+// RosterEpoch entirely. Whether expired entities are returned at a past block is not documented,
+// so the design keeps RosterEpoch and treats this as the upgrade path — not as a promise.
+export async function rosterAtBlock(p: Pub, market: string, block: bigint) {
+  const res = await p.select({ key: true, creator: true })
+    .where(eq(&quot;app&quot;, APP), eq(&quot;kind&quot;, &quot;witness&quot;), eq(&quot;market&quot;, market))
+    .validAtBlock(block).limit(PAGE).fetch();
+  return res.entities.map(e =&gt; e.creator);
+}
+</code></pre>
+    </details>
+  </section>
+
+  <hr>
+
+
+  <section class="col" style="max-width: 100%;">
+    <h2>The sketch is executed, not just compiled</h2>
+    <p class="lede" style="font-size: 1rem;">The sketch code above runs, unchanged, against <code>MemArkiv</code> &mdash; an executable specification of the twelve Arkiv rules this design depends on, each cited to the SDK source or the fundamentals. It is not Arkiv and claims nothing about performance; it is the referee for the design&rsquo;s <em>logic</em>. Eight SELISIH invariants, all passing, offline, in under a second. The first run of one of them failed because the <em>test</em> was wrong and the design was right; that is left in as a comment.</p>
+    <details style="background: var(--surface); border: 1px solid var(--rule); padding: 1rem 1.25rem;">
+      <summary style="cursor: pointer; font-weight: 600;">invariants.test.ts &mdash; click to expand</summary>
+      <pre style="overflow-x: auto; font-size: 0.78rem; line-height: 1.5; margin: 1rem 0 0; padding: 0; background: transparent;"><code>// Executable invariants for LAYAK and SELISIH — runs the real sketch code (type-checked against
+// @arkiv-network/sdk@0.7.0) against MemArkiv, an executable spec of the documented semantics.
+// Run: node --test dist/invariants.test.js   (after tsc). Nothing here touches a network.
+import { test } from &quot;node:test&quot;;
+import assert from &quot;node:assert/strict&quot;;
+import { MemArkiv, NotOwnerError, InvalidExpirationError } from &quot;./memarkiv.js&quot;;
+import * as L from &quot;../layak.sketch.js&quot;;
+import * as S from &quot;../selisih.sketch.js&quot;;
+import type { Hex } from &quot;viem&quot;;
+
+const INSPECTOR = &quot;0x1111111111111111111111111111111111111111&quot; as Hex;
+const CONTRACTOR = &quot;0x2222222222222222222222222222222222222222&quot; as Hex;
+const BUYER      = &quot;0x3333333333333333333333333333333333333333&quot; as Hex;
+const W = (n: number) =&gt; (&quot;0x&quot; + String(n).repeat(40)) as Hex;
+const any = (x: unknown) =&gt; x as any;   // MemArkiv is structurally the surface the sketches use; the SDK&#x27;s client type is a viem client
+
+// ============================== LAYAK ==============================
+
+test(&quot;LAYAK-1: an expired certificate is not returned — with no date filter anywhere&quot;, async () =&gt; {
+  const db = new MemArkiv(INSPECTOR);
+  await L.recordExamination(any(db), { assetId: &quot;A-4471&quot;, siteId: &quot;S1&quot;, certType: &quot;SLO-angkat&quot;, bodyId: &quot;PJK3-7&quot;, examRecordId: &quot;E1&quot;, regimeCode: 2, outcomeCode: 0, defectCount: 0, testRatioBps: 12500, reportHash: &quot;0xabc&quot; });
+  // First run of this test expected RED here and FAILED: the sketch returns AMBER — certified, but no Asset entity
+  // claims responsibility. That is the designed behaviour (§9, orphaned certificate); the test expectation was wrong.
+  assert.equal((await L.gateCheck(any(db), &quot;A-4471&quot;, &quot;SLO-angkat&quot;)).code, &quot;AMBER_UNCLAIMED&quot;, &quot;certified but unclaimed → amber, never green&quot;);
+  db.createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 63_072_000, attributes: [{ key: &quot;app&quot;, value: &quot;layak&quot; }, { key: &quot;kind&quot;, value: &quot;asset&quot; }, { key: &quot;assetId&quot;, value: &quot;A-4471&quot; }] });
+  assert.equal((await L.gateCheck(any(db), &quot;A-4471&quot;, &quot;SLO-angkat&quot;)).code, &quot;GREEN&quot;);
+  db.advanceSeconds(31_536_000 + 2);                                     // one year + one block
+  assert.equal((await L.gateCheck(any(db), &quot;A-4471&quot;, &quot;SLO-angkat&quot;)).code, &quot;RED_NO_CERT&quot;, &quot;lifetime lapsed → the row no longer exists to be returned&quot;);
+  assert.ok(db.events.some(e =&gt; e.name === &quot;ArkivEntityExpired&quot;), &quot;expiry is an on-chain event, not a silent row state&quot;);
+});
+
+test(&quot;LAYAK-2: a FAILED exam writes the statutory record and NO certificate, atomically&quot;, async () =&gt; {
+  const db = new MemArkiv(INSPECTOR);
+  const r = await L.recordExamination(any(db), { assetId: &quot;A-9&quot;, siteId: &quot;S1&quot;, certType: &quot;SLO-angkat&quot;, bodyId: &quot;B&quot;, examRecordId: &quot;E9&quot;, regimeCode: 2, outcomeCode: 2, defectCount: 3, testRatioBps: 12500, reportHash: &quot;0x&quot; });
+  assert.equal(r.createdEntities.length, 1);
+  const exams = await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;exam&quot; }).fetch();
+  const certs = await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;cert&quot; }).fetch();
+  assert.equal(exams.entities.length, 1); assert.equal(certs.entities.length, 0);
+  assert.equal((await L.gateCheck(any(db), &quot;A-9&quot;, &quot;SLO-angkat&quot;)).code, &quot;RED_NO_CERT&quot;, &quot;absence is the fail state — the same absence as expiry&quot;);
+});
+
+test(&quot;LAYAK-3: the record outlives the certificate; the two lifetimes are opposite&quot;, async () =&gt; {
+  const db = new MemArkiv(INSPECTOR);
+  await L.recordExamination(any(db), { assetId: &quot;A-1&quot;, siteId: &quot;S1&quot;, certType: &quot;SLO-angkat&quot;, bodyId: &quot;B&quot;, examRecordId: &quot;E1&quot;, regimeCode: 2, outcomeCode: 0, defectCount: 0, testRatioBps: 12500, reportHash: &quot;0x&quot; });
+  db.advanceSeconds(31_536_000 + 2);
+  const certs = await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;cert&quot; }).fetch();
+  const exams = await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;exam&quot; }).fetch();
+  assert.equal(certs.entities.length, 0, &quot;certificate gone&quot;);
+  assert.equal(exams.entities.length, 1, &quot;statutory record still served — LOLER/riksa uji retention duty&quot;);
+});
+
+test(&quot;LAYAK-4: only the owner can extend — and an owner extending a cert is CAUGHT by Q8&quot;, async () =&gt; {
+  const db = new MemArkiv(INSPECTOR);
+  await L.recordExamination(any(db), { assetId: &quot;A-1&quot;, siteId: &quot;S1&quot;, certType: &quot;SLO-angkat&quot;, bodyId: &quot;B&quot;, examRecordId: &quot;E1&quot;, regimeCode: 2, outcomeCode: 0, defectCount: 0, testRatioBps: 12500, reportHash: &quot;0x&quot; });
+  const cert = (await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;cert&quot; }).fetch()).entities[0];
+  await assert.rejects(async () =&gt; db.as(CONTRACTOR).extendEntity({ entityKey: cert.key, expiresIn: 63_072_000 }), NotOwnerError, &quot;the contractor cannot extend a certificate it does not own&quot;);
+  assert.deepEqual(await L.extensionAnomalies(any(db), &quot;A-1&quot;), [], &quot;clean before&quot;);
+  // the corrupt inspector CAN extend their own entity — the protocol allows it (R3) — but cannot do it in secret:
+  db.extendEntity({ entityKey: cert.key, expiresIn: 63_072_000 });
+  // the mirrored expiresAtTs must be rewritten for the extension to be useful on the renewal queue; a forger updating it exposes the lie
+  db.updateEntity({ entityKey: cert.key, payload: cert.payload, contentType: cert.contentType, expiresIn: 63_072_000,
+    attributes: cert.attributes.map(a =&gt; a.key === &quot;expiresAtTs&quot; ? { key: a.key, value: (a.value as number) + 31_536_000 } : a) });
+  assert.deepEqual(await L.extensionAnomalies(any(db), &quot;A-1&quot;), [&quot;E1&quot;], &quot;certificate living longer than its own examination justifies → flagged, by anyone, without permission&quot;);
+});
+
+test(&quot;LAYAK-5: a live certificate with a lapsed Asset is AMBER, not GREEN&quot;, async () =&gt; {
+  const db = new MemArkiv(INSPECTOR);
+  db.createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 60, attributes: [{ key: &quot;app&quot;, value: &quot;layak&quot; }, { key: &quot;kind&quot;, value: &quot;asset&quot; }, { key: &quot;assetId&quot;, value: &quot;A-1&quot; }] });
+  await L.recordExamination(any(db), { assetId: &quot;A-1&quot;, siteId: &quot;S1&quot;, certType: &quot;SLO-angkat&quot;, bodyId: &quot;B&quot;, examRecordId: &quot;E1&quot;, regimeCode: 2, outcomeCode: 0, defectCount: 0, testRatioBps: 12500, reportHash: &quot;0x&quot; });
+  assert.equal((await L.gateCheck(any(db), &quot;A-1&quot;, &quot;SLO-angkat&quot;)).code, &quot;GREEN&quot;);
+  db.advanceSeconds(62);
+  assert.equal((await L.gateCheck(any(db), &quot;A-1&quot;, &quot;SLO-angkat&quot;)).code, &quot;AMBER_UNCLAIMED&quot;, &quot;certified, but nobody is renewing responsibility for the machine&quot;);
+});
+
+test(&quot;LAYAK-6: a Prohibition turns the gate red without touching the certificate (no triggers exist)&quot;, async () =&gt; {
+  const db = new MemArkiv(INSPECTOR);
+  db.createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 63_072_000, attributes: [{ key: &quot;app&quot;, value: &quot;layak&quot; }, { key: &quot;kind&quot;, value: &quot;asset&quot; }, { key: &quot;assetId&quot;, value: &quot;A-1&quot; }] });
+  await L.recordExamination(any(db), { assetId: &quot;A-1&quot;, siteId: &quot;S1&quot;, certType: &quot;SLO-angkat&quot;, bodyId: &quot;B&quot;, examRecordId: &quot;E1&quot;, regimeCode: 2, outcomeCode: 0, defectCount: 0, testRatioBps: 12500, reportHash: &quot;0x&quot; });
+  const pro = db.createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 86_400, attributes: [{ key: &quot;app&quot;, value: &quot;layak&quot; }, { key: &quot;kind&quot;, value: &quot;prohibition&quot; }, { key: &quot;assetId&quot;, value: &quot;A-1&quot; }] });
+  assert.equal((await L.gateCheck(any(db), &quot;A-1&quot;, &quot;SLO-angkat&quot;)).code, &quot;RED_PROHIBITION&quot;);
+  db.advanceSeconds(86_402);                                              // prohibition lapses (or the inspector lifts it) → green again, cert untouched
+  assert.equal((await L.gateCheck(any(db), &quot;A-1&quot;, &quot;SLO-angkat&quot;)).code, &quot;GREEN&quot;);
+  assert.ok(pro.entityKey);
+});
+
+test(&quot;LAYAK-7: resale moves $owner and keeps $creator on every certificate&quot;, async () =&gt; {
+  const db = new MemArkiv(INSPECTOR);
+  const asset = db.as(CONTRACTOR).createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 63_072_000, attributes: [{ key: &quot;app&quot;, value: &quot;layak&quot; }, { key: &quot;kind&quot;, value: &quot;asset&quot; }, { key: &quot;assetId&quot;, value: &quot;A-1&quot; }] });
+  await L.recordExamination(any(db), { assetId: &quot;A-1&quot;, siteId: &quot;S1&quot;, certType: &quot;SLO-angkat&quot;, bodyId: &quot;B&quot;, examRecordId: &quot;E1&quot;, regimeCode: 2, outcomeCode: 1, defectCount: 2, testRatioBps: 12500, reportHash: &quot;0x&quot; });
+  await L.sell(any(db.as(CONTRACTOR)), asset.entityKey, BUYER);
+  const a = (await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;asset&quot; }).fetch()).entities[0];
+  const e = (await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;exam&quot; }).fetch()).entities[0];
+  assert.equal(a.owner, BUYER); assert.equal(a.creator, CONTRACTOR); assert.equal(e.creator, INSPECTOR, &quot;the past was never the seller&#x27;s to leave behind&quot;);
+});
+
+test(&quot;LAYAK-8: .count() is one page — complianceGap sums pages, so 350 assets are 350, not 200&quot;, async () =&gt; {
+  const db = new MemArkiv(CONTRACTOR);
+  for (let i = 0; i &lt; 350; i++) db.createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 63_072_000, attributes: [{ key: &quot;app&quot;, value: &quot;layak&quot; }, { key: &quot;kind&quot;, value: &quot;asset&quot; }, { key: &quot;assetId&quot;, value: &quot;A-&quot; + i }, { key: &quot;siteId&quot;, value: &quot;S1&quot; }] });
+  const naive = await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;asset&quot; }).limit(200).count();
+  assert.equal(naive, 200, &quot;the naive count the first draft relied on&quot;);
+  const gap = await L.complianceGap(any(db), &quot;S1&quot;, &quot;SLO-angkat&quot;);
+  assert.equal(gap.assets, 350); assert.equal(gap.gap, 350);
+});
+
+test(&quot;LAYAK-9: an odd expiresIn is rejected (2-second blocks)&quot;, () =&gt; {
+  const db = new MemArkiv(INSPECTOR);
+  assert.throws(() =&gt; db.createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 31_536_001, attributes: [] }), InvalidExpirationError);
+});
+
+// ============================== SELISIH ==============================
+
+const snap = (round: number, hf: number, tier: 0|1|2|3|4 = 0) =&gt; ({ market: &quot;aave-v3-eth-wsteth&quot;, round, blockNumber: 20_459_000, observedTs: 1_722_800_000, priceE8: 213_928_000_000, healthFactorBps: hf, totalDebtE6: 1, collateralE6: 1, atRiskCount: 0, deviationBps: 0, severityTier: tier, sourceHash: &quot;0x&quot;, salt: &quot;s&quot; });
+
+test(&quot;SELISIH-1: divergence board returns a SET per round, one row per witness, outlier attributable by creator&quot;, async () =&gt; {
+  const db = new MemArkiv(W(1));
+  for (const [w, hf] of [[1, 10420], [2, 10420], [3, 10420], [4, 9980], [5, 10420]] as const) {
+    await S.reveal(any(db.as(W(w))), snap(812, hf, w === 4 ? 4 : 0), []);
+    db.as(W(w)).createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 604_800, attributes: [{ key: &quot;app&quot;, value: &quot;selisih&quot; }, { key: &quot;kind&quot;, value: &quot;witness&quot; }, { key: &quot;market&quot;, value: &quot;aave-v3-eth-wsteth&quot; }] });
+  }
+  db.as(W(7)).createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 604_800, attributes: [{ key: &quot;app&quot;, value: &quot;selisih&quot; }, { key: &quot;kind&quot;, value: &quot;witness&quot; }, { key: &quot;market&quot;, value: &quot;aave-v3-eth-wsteth&quot; }] });
+  const d = await S.divergence(any(db), &quot;aave-v3-eth-wsteth&quot;, 812);
+  assert.equal(d.rows.length, 5); assert.equal(d.median, 10420); assert.equal(d.missing, 1, &quot;6 registered, 5 reported → w7 is the interesting row&quot;);
+  const outlier = d.rows.find(r =&gt; r.attributes.some(a =&gt; a.key === &quot;healthFactorBps&quot; &amp;&amp; a.value === 9980));
+  assert.equal(outlier?.creator, W(4), &quot;the outlier is named, not anonymised into an error bar&quot;);
+});
+
+test(&quot;SELISIH-2: a correction is a NEW entity; the board shows originals only via not(supersedesRound)&quot;, async () =&gt; {
+  const db = new MemArkiv(W(1));
+  await S.reveal(any(db), snap(812, 10420), []);
+  await S.reveal(any(db), { ...snap(812, 10300), supersedesRound: 812 }, []);
+  const d = await S.divergence(any(db), &quot;aave-v3-eth-wsteth&quot;, 812);
+  assert.equal(d.rows.length, 1); assert.equal(d.median, 10420, &quot;the original is never silently edited; the correction sits beside it&quot;);
+  const all = await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;snapshot&quot; }).fetch();
+  assert.equal(all.entities.length, 2);
+});
+
+test(&quot;SELISIH-3: only the owner may extend — a disputant CANNOT preserve a witness&#x27;s reading; a pin can&quot;, async () =&gt; {
+  const db = new MemArkiv(W(1));
+  const { entityKey } = await S.reveal(any(db), snap(812, 9980, 4), [], 3);     // 72h floor
+  await assert.rejects(async () =&gt; db.as(W(9)).extendEntity({ entityKey, expiresIn: 7_776_000 }), NotOwnerError);
+  const original = (await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;snapshot&quot; }).fetch()).entities[0];
+  await S.pin(any(db.as(W(9))), { attributes: original.attributes, creator: original.creator, payload: original.payload }, entityKey, 31_536_000);
+  db.advanceSeconds(259_200 + 2);                                                 // the original lapses
+  const snaps = await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;snapshot&quot; }).fetch();
+  const pins  = await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;pin&quot; }).fetch();
+  assert.equal(snaps.entities.length, 0, &quot;the witness&#x27;s reading left the query surface&quot;);
+  assert.equal(pins.entities.length, 1); assert.equal(pins.entities[0].creator, W(9), &quot;the pin is the reader&#x27;s own entity, funded by the reader, carrying the original tx hash&quot;);
+  assert.equal(pins.entities[0].attributes.find(a =&gt; a.key === &quot;originTxHash&quot;)?.value, entityKey);
+});
+
+test(&quot;SELISIH-4: conviction is a receipt — cost in ArkivEntityCreated scales with the funded lifetime&quot;, async () =&gt; {
+  const db = new MemArkiv(W(1));
+  await S.reveal(any(db), snap(812, 10420), [], 3);
+  await S.reveal(any(db), snap(813, 10420), [], 90);
+  const [c3, c90] = db.events.filter(e =&gt; e.name === &quot;ArkivEntityCreated&quot;).map(e =&gt; (e as any).cost as bigint);
+  assert.ok(c90 &gt; c3 * 20n, `90-day funding costs ${c90} vs 3-day ${c3}: fundedDays is checkable against what was actually paid`);
+});
+
+test(&quot;SELISIH-5: pinQueue lists readings that will lapse BEFORE the dispute deadline&quot;, async () =&gt; {
+  const db = new MemArkiv(W(1));
+  await S.reveal(any(db), snap(812, 10420), [], 3);        // lapses in 72h
+  await S.reveal(any(db), snap(813, 10420), [], 30);       // funded past the deadline
+  const deadline = db.nowUnix() + 7 * 86_400;
+  const q = await S.pinQueue(any(db), &quot;aave-v3-eth-wsteth&quot;, 800, 900, deadline);
+  assert.equal(q.length, 1); assert.equal(q[0].attributes.find(a =&gt; a.key === &quot;round&quot;)?.value, 812);
+});
+
+test(&quot;SELISIH-6: silence is an event — a witness that stops renewing emits ArkivEntityExpired under its own key&quot;, async () =&gt; {
+  const db = new MemArkiv(W(4));
+  const reg = db.createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 604_800, attributes: [{ key: &quot;app&quot;, value: &quot;selisih&quot; }, { key: &quot;kind&quot;, value: &quot;witness&quot; }, { key: &quot;market&quot;, value: &quot;m&quot; }] });
+  await S.heartbeat(any(db), reg.entityKey); db.advanceSeconds(604_800 - 100);
+  assert.equal(db.events.filter(e =&gt; e.name === &quot;ArkivEntityExpired&quot;).length, 0, &quot;renewed → still live&quot;);
+  db.advanceSeconds(200);
+  const ev = db.events.find(e =&gt; e.name === &quot;ArkivEntityExpired&quot;) as any;
+  assert.equal(ev?.owner, W(4), &quot;leaving is a log entry with your key on it&quot;);
+});
+
+test(&quot;SELISIH-7: track record uses createdBy natively — no mirrored witness attribute exists in the schema&quot;, async () =&gt; {
+  const db = new MemArkiv(W(4));
+  await S.reveal(any(db), snap(1, 9000, 4), []); await S.reveal(any(db), snap(2, 9000, 3), []); await S.reveal(any(db), snap(3, 10420, 0), []);
+  db.as(W(8)).createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 86_400, attributes: [{ key: &quot;app&quot;, value: &quot;selisih&quot; }, { key: &quot;kind&quot;, value: &quot;resolution&quot; }, { key: &quot;vindicatedWitness&quot;, value: W(4) }] });
+  const tr = await S.trackRecord(any(db), W(4));
+  assert.deepEqual(tr, { broke: 2, vindicated: 1 });
+  const s = (await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;snapshot&quot; }).fetch()).entities[0];
+  assert.ok(!s.attributes.some(a =&gt; a.key === &quot;witness&quot;), &quot;$creator is metadata, not an attribute to mirror&quot;);
+});
+
+test(&quot;SELISIH-8: RosterEpoch answers &#x27;who was expected&#x27; after registrations have expired&quot;, async () =&gt; {
+  const db = new MemArkiv(W(1));
+  for (const w of [1, 2, 3]) db.as(W(w)).createEntity({ payload: new Uint8Array(0), contentType: &quot;application/json&quot;, expiresIn: 604_800, attributes: [{ key: &quot;app&quot;, value: &quot;selisih&quot; }, { key: &quot;kind&quot;, value: &quot;witness&quot; }, { key: &quot;market&quot;, value: &quot;m&quot; }] });
+  await S.rosterEpoch(any(db), &quot;m&quot;, 1, 800, 900, [W(1), W(2), W(3)]);
+  const atRound = db.block;
+  db.advanceSeconds(30 * 86_400);                                                 // a month into a dispute: registrations long gone
+  const live = await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;witness&quot; }).count();
+  assert.equal(live, 0, &quot;querying live registrations now answers WRONG with total confidence&quot;);
+  const epoch = (await db.select().where({ type: &quot;eq&quot;, key: &quot;kind&quot;, value: &quot;roster&quot; }, { type: &quot;lte&quot;, key: &quot;roundFrom&quot;, value: 812 }, { type: &quot;gte&quot;, key: &quot;roundTo&quot;, value: 812 }).fetch()).entities[0];
+  assert.equal(epoch.attributes.find(a =&gt; a.key === &quot;witnessCount&quot;)?.value, 3, &quot;the fact was stored while it was true&quot;);
+  // and the upgrade path: validAtBlock() — if the network serves history, this replaces RosterEpoch
+  assert.equal((await S.rosterAtBlock(any(db), &quot;m&quot;, atRound)).length, 3);
+});
+</code></pre>
+    </details>
+    <details style="background: var(--surface); border: 1px solid var(--rule); padding: 1rem 1.25rem; margin-top: 0.75rem;">
+      <summary style="cursor: pointer; font-weight: 600;">memarkiv.ts &mdash; the executable spec, with every rule cited</summary>
+      <pre style="overflow-x: auto; font-size: 0.78rem; line-height: 1.5; margin: 1rem 0 0; padding: 0; background: transparent;"><code>// MemArkiv — an executable specification of the Arkiv semantics this design depends on.
+// NOT Arkiv, and not a substitute for it. Every rule below is cited to the published SDK source
+// (@arkiv-network/sdk@0.7.0) or the arkiv-fundamentals doc, so that the sketches — which already
+// type-check against the real package — can be EXECUTED and their invariants asserted, offline.
+//
+//  R1  expiresIn is seconds; lifetimes are 2-second blocks (utils/expirationTime.ts, consts BLOCK_TIME=2)
+//  R2  an expired entity leaves the query surface (fundamentals: &quot;drops off the query surface&quot;)
+//  R3  only the owner may update / delete / extend (ideation-guide §4)
+//  R4  updateEntity is a full replace (fundamentals: &quot;An attribute you omit ... is silently removed&quot;)
+//  R5  $creator is immutable; $owner moves via changeOwnership (types/entity.ts, actions/wallet/changeOwnership.ts)
+//  R6  results are newest-first; no server-side ordering (docs: &quot;always returns matching entities newest first&quot;)
+//  R7  string attributes support eq() only; range ops on numerics (fundamentals + query/predicate.ts)
+//  R8  not(key) = attribute absent; neq = not equal (query/predicate.ts)
+//  R9  .count() = length of ONE page, limit ≤ 200 (query/queryBuilder.ts count(): queryResult.data.length)
+//  R10 mutateEntities is one atomic transaction (actions/wallet/mutateEntities.ts: single sendArkivTransaction)
+//  R11 ArkivEntityCreated(..., cost) / ArkivEntityExpired / ArkivEntityBTLExtended(..., cost) are emitted
+//      (actions/public/subscribeEntityEvents.ts arkivABI); cost ∝ size × lifetime (fundamentals)
+//  R12 createdAtBlock / expiresAtBlock / creator / owner are returned as metadata (types/entity.ts)
+
+import type { Attribute } from &quot;@arkiv-network/sdk&quot;;
+import type { Predicate } from &quot;@arkiv-network/sdk/query&quot;;
+import type { Hex } from &quot;viem&quot;;
+
+export const BLOCK_TIME = 2;
+const PAGE_MAX = 200;
+
+type Row = {
+  key: Hex; creator: Hex; owner: Hex; payload: Uint8Array; contentType: string;
+  attributes: Attribute[]; createdAtBlock: bigint; expiresAtBlock: bigint; lastModifiedAtBlock: bigint; seq: number;
+};
+export type Event =
+  | { name: &quot;ArkivEntityCreated&quot;; entityKey: Hex; owner: Hex; expirationBlock: bigint; cost: bigint }
+  | { name: &quot;ArkivEntityBTLExtended&quot;; entityKey: Hex; owner: Hex; oldExpirationBlock: bigint; newExpirationBlock: bigint; cost: bigint }
+  | { name: &quot;ArkivEntityExpired&quot;; entityKey: Hex; owner: Hex }
+  | { name: &quot;ArkivEntityOwnerChanged&quot;; entityKey: Hex; oldOwner: Hex; newOwner: Hex };
+
+export class NotOwnerError extends Error {}
+export class InvalidExpirationError extends Error {}
+
+// One shared store per chain; `as(signer)` returns a view over the SAME store with a different wallet.
+type Store = { block: bigint; seq: number; rows: Map&lt;Hex, Row&gt;; events: Event[]; genesisUnix: number };
+
+export class MemArkiv {
+  private st: Store;
+  constructor(public signer: Hex, st?: Store) {
+    // genesis chosen so that chain time ≈ wall-clock at construction: the sketches stamp `now()` from Date.now()
+    this.st = st ?? { block: 1000n, seq: 0, rows: new Map(), events: [], genesisUnix: Math.floor(Date.now() / 1000) - 1000 * BLOCK_TIME };
+  }
+  as(signer: Hex) { return new MemArkiv(signer, this.st); }
+  get block() { return this.st.block; }
+  get rows() { return this.st.rows; }
+  get events() { return this.st.events; }
+
+  // ---- time ----
+  advanceSeconds(s: number) {
+    this.st.block += BigInt(Math.ceil(s / BLOCK_TIME));
+    for (const r of this.rows.values())                                                  // R2 + R11
+      if (r.expiresAtBlock &lt;= this.block &amp;&amp; !r.attributes.some(a =&gt; a.key === &quot;__expired&quot;)) {
+        r.attributes.push({ key: &quot;__expired&quot;, value: 1 });
+        this.events.push({ name: &quot;ArkivEntityExpired&quot;, entityKey: r.key, owner: r.owner });
+      }
+  }
+  blockToUnix(b: bigint) { return this.st.genesisUnix + Number(b) * BLOCK_TIME; }
+  nowUnix() { return this.blockToUnix(this.block); }
+
+  // ---- wallet actions (same parameter shapes as the SDK) ----
+  private cost(payload: Uint8Array, attributes: Attribute[], expiresIn: number) {
+    const bytes = payload.length + JSON.stringify(attributes).length;
+    return BigInt(bytes) * BigInt(Math.ceil(expiresIn / BLOCK_TIME));                  // R11: size × lifetime
+  }
+  createEntity(p: { payload: Uint8Array; attributes: Attribute[]; contentType: string; expiresIn: number }) {
+    if (!Number.isInteger(p.expiresIn) || p.expiresIn &lt;= 0 || p.expiresIn % 2 !== 0) throw new InvalidExpirationError(String(p.expiresIn)); // R1
+    const seq = ++this.st.seq;
+    const key = (&quot;0x&quot; + seq.toString(16).padStart(64, &quot;0&quot;)) as Hex;
+    const exp = this.block + BigInt(p.expiresIn / BLOCK_TIME);
+    this.rows.set(key, { key, creator: this.signer, owner: this.signer, payload: p.payload, contentType: p.contentType,
+      attributes: [...p.attributes], createdAtBlock: this.block, expiresAtBlock: exp, lastModifiedAtBlock: this.block, seq });
+    const cost = this.cost(p.payload, p.attributes, p.expiresIn);
+    this.events.push({ name: &quot;ArkivEntityCreated&quot;, entityKey: key, owner: this.signer, expirationBlock: exp, cost });
+    return { entityKey: key, txHash: (&quot;0x&quot; + &quot;t&quot;.repeat(0) + key.slice(2)) as Hex };
+  }
+  private own(key: Hex) { const r = this.rows.get(key); if (!r) throw new Error(&quot;no such entity&quot;); if (r.owner !== this.signer) throw new NotOwnerError(key); return r; } // R3
+  extendEntity(p: { entityKey: Hex; expiresIn: number }) {
+    const r = this.own(p.entityKey); const old = r.expiresAtBlock;
+    r.expiresAtBlock = this.block + BigInt(p.expiresIn / BLOCK_TIME); r.lastModifiedAtBlock = this.block;
+    this.events.push({ name: &quot;ArkivEntityBTLExtended&quot;, entityKey: r.key, owner: r.owner, oldExpirationBlock: old, newExpirationBlock: r.expiresAtBlock, cost: this.cost(r.payload, r.attributes, p.expiresIn) });
+    return { entityKey: r.key, txHash: r.key };
+  }
+  updateEntity(p: { entityKey: Hex; payload: Uint8Array; attributes: Attribute[]; contentType: string; expiresIn: number }) {
+    const r = this.own(p.entityKey);                                                     // R4: full replace
+    r.payload = p.payload; r.attributes = [...p.attributes]; r.contentType = p.contentType;
+    r.expiresAtBlock = this.block + BigInt(p.expiresIn / BLOCK_TIME); r.lastModifiedAtBlock = this.block;
+    return { entityKey: r.key, txHash: r.key };
+  }
+  deleteEntity(p: { entityKey: Hex }) { this.own(p.entityKey); this.rows.delete(p.entityKey); return { entityKey: p.entityKey, txHash: p.entityKey }; }
+  changeOwnership(p: { entityKey: Hex; newOwner: Hex }) {
+    const r = this.own(p.entityKey); const old = r.owner; r.owner = p.newOwner;         // R5: creator untouched
+    this.events.push({ name: &quot;ArkivEntityOwnerChanged&quot;, entityKey: r.key, oldOwner: old, newOwner: p.newOwner });
+    return { entityKey: r.key, txHash: r.key };
+  }
+  mutateEntities(p: { creates?: Parameters&lt;MemArkiv[&quot;createEntity&quot;]&gt;[0][]; extensions?: Parameters&lt;MemArkiv[&quot;extendEntity&quot;]&gt;[0][];
+                      ownershipChanges?: Parameters&lt;MemArkiv[&quot;changeOwnership&quot;]&gt;[0][]; deletes?: { entityKey: Hex }[] }) {
+    // R10: atomic — validate ownership/expiry for every op BEFORE applying any
+    for (const e of p.extensions ?? []) this.own(e.entityKey);
+    for (const o of p.ownershipChanges ?? []) this.own(o.entityKey);
+    for (const d of p.deletes ?? []) this.own(d.entityKey);
+    for (const c of p.creates ?? []) if (c.expiresIn % 2 !== 0 || c.expiresIn &lt;= 0) throw new InvalidExpirationError(String(c.expiresIn));
+    const createdEntities = (p.creates ?? []).map(c =&gt; this.createEntity(c).entityKey);
+    const extendedEntities = (p.extensions ?? []).map(e =&gt; this.extendEntity(e).entityKey);
+    const ownershipChanges = (p.ownershipChanges ?? []).map(o =&gt; this.changeOwnership(o).entityKey);
+    const deletedEntities = (p.deletes ?? []).map(d =&gt; this.deleteEntity(d).entityKey);
+    return { txHash: &quot;0xbatch&quot; as Hex, createdEntities, updatedEntities: [] as Hex[], deletedEntities, extendedEntities, ownershipChanges };
+  }
+
+  // ---- public query surface (same chain shape as the SDK builder) ----
+  select(_fields?: unknown) { return new MemQuery(this); }
+}
+
+function matches(r: Row, p: Predicate): boolean {
+  if (p.type === &quot;and&quot;) return p.predicates.every(q =&gt; matches(r, q));
+  if (p.type === &quot;or&quot;) return p.predicates.some(q =&gt; matches(r, q));
+  const lp = p as Extract&lt;Predicate, { key: string }&gt;;
+  const a = r.attributes.find(x =&gt; x.key === lp.key);
+  if (lp.type === &quot;not&quot;) return a === undefined;                                         // R8
+  if (a === undefined) return false;
+  const v = a.value;
+  switch (lp.type) {
+    case &quot;eq&quot;: return v === lp.value;
+    case &quot;neq&quot;: return v !== lp.value;
+    default:
+      if (typeof v !== &quot;number&quot; || typeof lp.value !== &quot;number&quot;) return false;           // R7: ranges on numerics only
+      return lp.type === &quot;gt&quot; ? v &gt; lp.value : lp.type === &quot;gte&quot; ? v &gt;= lp.value : lp.type === &quot;lt&quot; ? v &lt; lp.value : v &lt;= lp.value;
+  }
+}
+
+export class MemQuery {
+  private preds: Predicate[] = []; private _limit = PAGE_MAX; private _offset = 0; private _creator?: Hex; private _owner?: Hex; private _at?: bigint;
+  constructor(private db: MemArkiv) {}
+  where(...ps: (Predicate | Predicate[])[]) { this.preds.push(...ps.flat()); return this; }
+  createdBy(h: Hex) { this._creator = h; return this; }
+  ownedBy(h: Hex) { this._owner = h; return this; }
+  limit(n: number) { this._limit = Math.min(n, PAGE_MAX); return this; }
+  validAtBlock(_b: bigint) { this._at = _b; return this; }
+  private all() {
+    const at = this._at ?? this.db.block;
+    return [...this.db.rows.values()]
+      .filter(r =&gt; r.createdAtBlock &lt;= at &amp;&amp; r.expiresAtBlock &gt; at)                     // R2 (validAtBlock reads history in the spec; see design note)
+      .filter(r =&gt; (!this._creator || r.creator === this._creator) &amp;&amp; (!this._owner || r.owner === this._owner))
+      .filter(r =&gt; this.preds.every(p =&gt; matches(r, p)))
+      .sort((a, b) =&gt; b.seq - a.seq);                                                    // R6: newest-first, nothing else
+  }
+  async fetch() {
+    const rows = this.all(); const page = rows.slice(this._offset, this._offset + this._limit);
+    const entities = page.map(r =&gt; ({ key: r.key, creator: r.creator, owner: r.owner, payload: r.payload, contentType: r.contentType,
+      attributes: r.attributes.filter(a =&gt; a.key !== &quot;__expired&quot;), createdAtBlock: r.createdAtBlock, expiresAtBlock: r.expiresAtBlock, lastModifiedAtBlock: r.lastModifiedAtBlock })); // R12
+    const self = this;
+    const res = {
+      entities,
+      hasNextPage: () =&gt; self._offset + self._limit &lt; rows.length,
+      async next() { self._offset += self._limit; const n = await self.fetch(); res.entities = n.entities; res.hasNextPage = n.hasNextPage; },
+    };
+    return res;
+  }
+  async count() { return (await this.fetch()).entities.length; }                        // R9: ONE page, not a total
+}
+</code></pre>
+    </details>
+  </section>
+
+  <hr>
+
+
+  <section class="col" style="max-width: 100%;">
+    <h2>And against what comes next: <code>0.8.0-dev</code></h2>
+    <p class="lede" style="font-size: 1rem;">The September testnet runs a rebuilt architecture, and its SDK is already on npm under the <code>dev</code> tag. I read that too. It makes this design smaller and confirms one piece of feedback.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>On 0.7.0</th><th>On 0.8.0-dev</th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td><code>expiresAtTs</code> mirrored so the pin queue can range-filter</td><td><code>$expiresAt</code> is a <b>queryable system attribute</b></td><td>The mirror disappears</td></tr>
+        <tr><td>integers, scale in the key</td><td><code>dec</code> type, 18 exact fractional digits; <code>addr</code> for witnesses</td><td>Prices stored as written; <code>severityTier</code> stays a bucket on purpose</td></tr>
+        <tr><td><code>validAtBlock()</code> as the RosterEpoch upgrade path</td><td><code>atBlock()</code> &mdash; still there</td><td>The upgrade path survives the rewrite</td></tr>
+        <tr><td><code>.count()</code> = one page</td><td>no <code>count()</code> in the builder</td><td>Page-and-sum is the right shape on both</td></tr>
+        <tr><td class="hit"><code>createdAtBlock</code> returned, not filterable</td><td class="hit"><code>$createdAt</code> is still <b>result-only</b></td><td class="hit">Protocol feedback #2 stands on the new architecture</td></tr>
+      </tbody></table></div>
+  </section>
+
+  <hr>
+
+  <section class="col">
+    <h2>The weekend slice</h2>
+    <p><b>Day one, the witnesses already exist.</b> A single process tails the ETH/USD aggregator&rsquo;s <code>NewTransmission</code> logs and writes each node&rsquo;s observation as its own entity &mdash; 31 per round, 161 rounds in the crash window alone &mdash; with nothing asked of Chainlink. Independent witnesses join the same schema. The minimum human slice is still: one market. Three witnesses, run from three machines by three people. One screen showing the divergence row and a &ldquo;6 of 7 reporting&rdquo; badge. If three independent parties can look at one screen and agree about what they disagreed about, the idea is proven.</p>
+    <p style="color: var(--muted);"><b>Not building in v1:</b> the arbitration flow, and the bond contract.</p>
+    <p style="color: var(--muted);"><b>The honest limit:</b> divergence detects disagreement, not a cartel. What SELISIH guarantees is <i>attributable</i> readings, not correct ones &mdash; a smaller claim than it first appears, and one worth stating plainly.</p>
+  </section>
+
+  <footer class="col">
+    <hr style="margin-bottom: 1.5rem;">
+    <p>Submitted to Challenge 3 &middot; DeFi. Design only &mdash; the ideathon asks for an idea and its Arkiv data model, and nothing here is deployed.</p>
+  </footer>
+
+</div>
