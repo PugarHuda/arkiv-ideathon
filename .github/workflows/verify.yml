@@ -14,3 +14,5 @@ jobs:
         run: npm run test:invariants
       - name: Page QA with Playwright (local static server)
         run: npx playwright install --with-deps chromium && npm run qa:site
+      - name: The expiry demo really does go green then red
+        run: npm run build:demo && npm run qa:demo

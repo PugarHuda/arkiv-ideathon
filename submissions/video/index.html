@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Walkthrough videos — SELISIH & LAYAK</title>
-<meta name="description" content="Two-minute narrated walkthroughs of the SELISIH and LAYAK Arkiv Ideathon entries, with subtitles.">
-<meta property="og:title" content="Walkthrough videos — SELISIH & LAYAK">
-<meta property="og:description" content="Two-minute narrated walkthroughs of the SELISIH and LAYAK Arkiv Ideathon entries, with subtitles.">
+<title>Videos — LAYAK expiry demo &amp; walkthroughs</title>
+<meta name="description" content="One unedited take of a LAYAK certificate expiring, plus narrated walkthroughs of both Arkiv Ideathon entries. Subtitled.">
+<meta property="og:title" content="Videos — LAYAK expiry demo and walkthroughs">
+<meta property="og:description" content="One unedited take of a LAYAK certificate expiring, plus narrated walkthroughs of both Arkiv Ideathon entries. Subtitled.">
 <meta property="og:image" content="https://pugarhuda.github.io/arkiv-ideathon/submissions/og-selisih.png">
 <meta name="twitter:card" content="summary_large_image">
 <style>
@@ -25,9 +25,25 @@
 <div class="wrap">
   <header>
     <p class="eyebrow">Arkiv Ideathon · August 2026</p>
-    <h1>Walkthrough videos</h1>
-    <p>Playwright recordings of the live pages with a narrated voiceover. Subtitles are a real track — toggle them with the CC button. Nothing is deployed; the pages shown are the ones linked below.</p>
+    <h1>Videos</h1>
+    <p>Playwright recordings with a narrated voiceover. Subtitles are a real track — toggle them with the CC button. The first is a demo of the design actually running; the other two are walkthroughs of the live pages. Nothing is deployed and nothing is staged.</p>
   </header>
+
+  <section class="card" id="expiry">
+    <p class="eyebrow">Demo · the claim, running</p>
+    <h2>Watch a certificate expire</h2>
+    <video controls preload="metadata" playsinline poster="../og-layak.png">
+      <source src="LAYAK-expiry.mp4" type="video/mp4">
+      <track kind="subtitles" src="LAYAK-expiry.vtt" srclang="en" label="English" default>
+      Your browser cannot play this video — <a href="LAYAK-expiry.mp4">download the MP4</a>.
+    </video>
+    <p class="meta" id="expiry-meta">1:01 · 1080p · h264/aac · subtitles: <a href="LAYAK-expiry.vtt">VTT</a> · <a href="LAYAK-expiry.srt">SRT</a> · <a href="LAYAK-expiry.mp4">MP4</a></p>
+    <p class="note">One real-time take, nothing cut: a certificate written with a 40-second lifetime goes green,
+    then red, while the query on screen never changes and no date is ever compared. The gate check is
+    <code>gateCheck()</code> imported unmodified from <a href="../layak.sketch.ts">layak.sketch.ts</a> — the same
+    function the 17 invariants run — against <a href="../evidence/memarkiv.ts">MemArkiv</a>, the executable spec.
+    Run it yourself: <a href="demo/">demo/</a> (add <code>?ttl=20</code> to shorten the wait).</p>
+  </section>
 
   <section class="card">
     <p class="eyebrow">Challenge 3 · DeFi</p>
@@ -53,7 +69,7 @@
     <p class="note">Page: <a href="../layak.html">layak.html</a></p>
   </section>
 
-  <p class="note">How they were made: the recorder, narration script and compositions are described in the <a href="../../README.md">README</a>.</p>
+  <p class="note">How the demo was made: <a href="demo/narrate.py">narrate.py</a> (neural voiceover + subtitles) and <a href="demo/record.mjs">record.mjs</a> (the capture) — both committed and rerunnable with <code>npm run video:demo</code>. The two walkthroughs predate that pipeline; see the <a href="../../README.md">README</a>.</p>
 </div>
 </body>
 </html>

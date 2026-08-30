@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LAYAK — watch a certificate expire</title>
+<meta name="description" content="A live gate check running the unmodified LAYAK sketch against MemArkiv: a certificate goes green, then red, with no code run to change it.">
+<meta property="og:title" content="LAYAK — watch a certificate expire">
+<meta property="og:description" content="The certificate's lifetime IS its validity period. Watch the row leave the query surface with nothing run to make it happen.">
+<meta property="og:image" content="https://pugarhuda.github.io/arkiv-ideathon/submissions/og-layak.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root{--bg:#0F1219;--fg:#E3E7ED;--muted:#8C95A3;--accent:#FF7A45;--surface:#161A22;--line:#262D38;
+        --green:#2FBF71;--red:#F0483E}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,Segoe UI,sans-serif;
+       padding:2rem 1.5rem 2.5rem}
+  .wrap{max-width:76rem;margin:0 auto}
+  header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:1.5rem}
+  .eyebrow{font:500 .72rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;
+           color:var(--muted);margin:0 0 .5rem}
+  h1{font-size:1.6rem;margin:0;letter-spacing:-.01em}
+  .sub{margin:.4rem 0 0;color:var(--muted);font-size:.95rem;max-width:46rem}
+  .badge{font:.75rem/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);border:1px solid var(--line);
+         background:var(--surface);padding:.5rem .7rem;border-radius:.35rem;max-width:22rem}
+  .badge b{color:var(--accent);font-weight:600}
+  .grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:1.25rem;align-items:start}
+  @media (max-width:900px){.grid{grid-template-columns:1fr}}
+
+  .card{border:1px solid var(--line);background:var(--surface);border-radius:.5rem;padding:1.6rem;
+        transition:border-color .25s,box-shadow .25s}
+  .card.green{border-color:rgba(47,191,113,.55);box-shadow:0 0 0 1px rgba(47,191,113,.18),0 12px 40px -22px rgba(47,191,113,.8)}
+  .card.red{border-color:rgba(240,72,62,.55);box-shadow:0 0 0 1px rgba(240,72,62,.18),0 12px 40px -22px rgba(240,72,62,.8)}
+  .lamp{display:flex;align-items:center;gap:.9rem}
+  .dot{width:1.15rem;height:1.15rem;border-radius:50%;flex:none;background:var(--muted)}
+  .green .dot{background:var(--green);box-shadow:0 0 0 6px rgba(47,191,113,.14)}
+  .red .dot{background:var(--red);box-shadow:0 0 0 6px rgba(240,72,62,.14)}
+  #verdict{font-size:2.6rem;font-weight:650;letter-spacing:-.02em;margin:0;line-height:1.1}
+  .green #verdict{color:var(--green)}.red #verdict{color:var(--red)}
+  #code{font:.78rem ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);border:1px solid var(--line);
+        padding:.25rem .5rem;border-radius:.3rem;margin-left:auto}
+  #verdictSub{color:var(--muted);margin:.6rem 0 1.2rem;font-size:1rem}
+  .assetline{display:flex;flex-wrap:wrap;gap:.5rem 1.4rem;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+             padding:.9rem 0;margin-bottom:1.2rem;font:.85rem ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted)}
+  .assetline b{color:var(--fg);font-weight:600}
+  .kv{display:flex;justify-content:space-between;gap:1rem;padding:.4rem 0;font:.85rem ui-monospace,SFMono-Regular,Menlo,monospace}
+  .kv span{color:var(--muted)}.kv b{font-weight:600;overflow-wrap:anywhere}
+  .gone{font:.95rem ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--red);padding:.4rem 0}
+  .gonesub{color:var(--muted);font-size:.9rem}
+
+  .panel{border:1px solid var(--line);background:var(--surface);border-radius:.5rem;padding:1.1rem 1.2rem;margin-bottom:1.25rem}
+  .panel h2{font:500 .72rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;
+            color:var(--muted);margin:0 0 .8rem;display:flex;align-items:center;gap:.5rem}
+  #pulse{width:.5rem;height:.5rem;border-radius:50%;background:var(--accent);flex:none}
+  pre{margin:0;font:.82rem/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--fg);overflow-x:auto}
+  pre .k{color:var(--accent)}pre .c{color:var(--muted)}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem}
+  .stat{border:1px solid var(--line);border-radius:.4rem;padding:.7rem .8rem;background:var(--bg)}
+  .stat i{display:block;font:.68rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.12em;
+          text-transform:uppercase;color:var(--muted);font-style:normal;margin-bottom:.4rem}
+  .stat b{font:1.5rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:600}
+  #leftSec{color:var(--muted);font:.78rem ui-monospace,SFMono-Regular,Menlo,monospace;margin-top:.7rem;display:block}
+  #events{display:flex;flex-direction:column;gap:.45rem;max-height:11rem;overflow:hidden}
+  .ev{font:.78rem/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);border-left:2px solid var(--line);
+      padding-left:.6rem;overflow-wrap:anywhere}
+  .ev.ok{border-left-color:var(--green)}.ev.bad{border-left-color:var(--red);color:var(--fg)}
+  .ev .t{color:var(--muted);opacity:.7;margin-right:.4rem}
+  footer{margin-top:1.5rem;border-top:1px solid var(--line);padding-top:1rem;color:var(--muted);font-size:.85rem}
+  footer b{color:var(--fg);font-weight:600}
+  footer a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <p class="eyebrow">LAYAK · Permenaker 8/2020 · gate check</p>
+      <h1>Watch a certificate expire</h1>
+      <p class="sub">The gate asks one question and never compares a date. When the certificate's lifetime runs
+      out the row leaves the query surface, so the same question answers itself differently — with nothing run
+      to make that happen.</p>
+    </div>
+    <p class="badge"><b>MemArkiv</b> — the executable spec, cited to the SDK source. Not a deployment; no Arkiv
+    network is open. Blocks advance at 2s against the wall clock. Certificate lifetime <b id="ttl">120s</b>
+    instead of a statutory 1&ndash;2 years, so it can be watched.</p>
+  </header>
+
+  <div class="grid">
+    <section id="card" class="card green">
+      <div class="lamp">
+        <span class="dot"></span>
+        <h2 id="verdict">LAYAK</h2>
+        <span id="code">GREEN</span>
+      </div>
+      <p id="verdictSub">Certificate live. Cleared to operate.</p>
+      <div class="assetline">
+        <span>asset <b>A-4471</b></span><span>mobile crane 25t</span>
+        <span>cert <b>SLO-angkat</b></span><span>site <b>S-JKT-03</b></span>
+      </div>
+      <div id="certBody"></div>
+    </section>
+
+    <div>
+      <section class="panel">
+        <h2><span id="pulse"></span> the query &mdash; unchanged, every 500&nbsp;ms</h2>
+<pre><span class="c">// layak.sketch.ts · gateCheck() · imported, not retyped</span>
+p.<span class="k">select</span>({ key, creator, attributes, createdAtBlock })
+ .<span class="k">where</span>(
+   <span class="k">eq</span>(<span class="c">"project"</span>,  <span class="c">"layak"</span>),
+   <span class="k">eq</span>(<span class="c">"type"</span>,     <span class="c">"cert"</span>),
+   <span class="k">eq</span>(<span class="c">"assetId"</span>,  <span class="c">"A-4471"</span>),
+   <span class="k">eq</span>(<span class="c">"certType"</span>, <span class="c">"SLO-angkat"</span>))
+ .<span class="k">limit</span>(5).<span class="k">fetch</span>()   <span class="c">// no date predicate exists</span></pre>
+      </section>
+
+      <section class="panel">
+        <h2>chain state</h2>
+        <div class="stats">
+          <div class="stat"><i>block</i><b id="block">&mdash;</b></div>
+          <div class="stat"><i>blocks left</i><b id="left">&mdash;</b></div>
+          <div class="stat"><i>live rows</i><b id="rows">&mdash;</b></div>
+        </div>
+        <span id="leftSec">&mdash;</span>
+      </section>
+
+      <section class="panel">
+        <h2>events emitted</h2>
+        <div id="events"></div>
+      </section>
+    </div>
+  </div>
+
+  <footer>
+    <b>No cron. No UPDATE. No date comparison.</b> The certificate is never touched after it is written &mdash;
+    expiry is the storage contract, not a filter every future query must remember to apply.
+    Code: <a href="../../layak.sketch.ts">layak.sketch.ts</a> ·
+    <a href="../../evidence/memarkiv.ts">memarkiv.ts</a> ·
+    <a href="../../evidence/invariants.test.ts">invariants.test.ts</a>
+  </footer>
+</div>
+<script type="module" src="demo.js"></script>
+</body>
+</html>

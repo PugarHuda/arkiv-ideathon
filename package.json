@@ -9,11 +9,15 @@
     "qa:site": "node qa/site.mjs",
     "qa:site:live": "node qa/site.mjs --base https://pugarhuda.github.io/arkiv-ideathon",
     "build:site": "python build_site.py",
-    "test": "npm run check && npm run test:invariants"
+    "test": "npm run check && npm run test:invariants",
+    "build:demo": "tsc -p tsconfig.test.json && esbuild dist/video/demo/demo.js --bundle --format=esm --target=es2022 --minify --outfile=submissions/video/demo/demo.js",
+    "qa:demo": "node qa/demo.mjs",
+    "video:demo": "python submissions/video/demo/narrate.py && node submissions/video/demo/record.mjs"
   },
   "devDependencies": {
     "@arkiv-network/sdk": "0.7.0",
     "@types/node": "^22.0.0",
+    "esbuild": "^0.28.2",
     "playwright": "^1.50.0",
     "typescript": "^5.6.0"
   }

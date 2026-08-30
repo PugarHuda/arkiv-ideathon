@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 
 const argBase = process.argv.indexOf("--base") > -1 ? process.argv[process.argv.indexOf("--base") + 1] : null;
 const ROOT = fileURLToPath(new URL("..", import.meta.url));   // fileURLToPath: the repo path contains a space
-const MIME = { ".html": "text/html; charset=utf-8", ".png": "image/png", ".mp4": "video/mp4", ".vtt": "text/vtt", ".srt": "text/plain", ".ts": "text/plain", ".py": "text/plain", ".json": "application/json", ".txt": "text/plain", ".md": "text/markdown" };
+const MIME = { ".html": "text/html; charset=utf-8", ".png": "image/png", ".mp4": "video/mp4", ".js": "text/javascript; charset=utf-8", ".mjs": "text/javascript; charset=utf-8", ".vtt": "text/vtt", ".srt": "text/plain", ".ts": "text/plain", ".py": "text/plain", ".json": "application/json", ".txt": "text/plain", ".md": "text/markdown" };
 
 let server, base = argBase;
 if (!base) {
@@ -26,7 +26,7 @@ if (!base) {
   base = `http://127.0.0.1:${server.address().port}`;
 }
 
-const PAGES = ["/index.html", "/submissions/selisih.html", "/submissions/layak.html", "/submissions/video/index.html", "/submissions/evidence/index.html"];
+const PAGES = ["/index.html", "/submissions/selisih.html", "/submissions/layak.html", "/submissions/video/index.html", "/submissions/video/demo/index.html", "/submissions/evidence/index.html"];
 const VIEWPORTS = [{ name: "iphone13", device: devices["iPhone 13"] }, { name: "929", viewport: { width: 929, height: 909 } }, { name: "1440", viewport: { width: 1440, height: 900 } }];
 const fails = []; const note = (ok, msg) => { console.log(`${ok ? "  ok " : "FAIL "} ${msg}`); if (!ok) fails.push(msg); };
 

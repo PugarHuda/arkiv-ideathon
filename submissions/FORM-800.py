@@ -158,13 +158,13 @@ L["What deliberately stays off Arkiv"] = (
 "and it is blind to machines never registered.")
 
 L["Supporting links (optional)"] = (
-"Write-up, diagrams, code: https://pugarhuda.github.io/arkiv-ideathon/submissions/layak.html — Evidence, not "
-"description: (1) the TS schema type-checks with tsc --strict against @arkiv-network/sdk@0.7.0 from npm, which corrected "
-"four things and surfaced createdAtBlock, createdBy(), validAtBlock() and the ArkivEntityExpired event. (2) Nine "
-"invariants execute the sketch against a cited spec of the documented semantics — expired cert never returned, failed "
-"exam writes record and no cert, an owner who extends is caught, orphan cert is amber, resale keeps $creator, 350 != 200 "
-"— all pass. (3) Read against 0.8.0-dev: $expiresAt becomes queryable, atDate() makes the deadline first-class, "
-"$createdAt stays result-only. Nothing is deployed.")
+"Write-up, diagrams, code: https://pugarhuda.github.io/arkiv-ideathon/submissions/layak.html — Watch the claim run, "
+"one unedited take: https://pugarhuda.github.io/arkiv-ideathon/submissions/video/#expiry — a certificate "
+"goes green, then red, while the query on screen never changes and no date is compared. Evidence: (1) the TS schema "
+"type-checks with tsc --strict against @arkiv-network/sdk@0.7.0 from npm, which surfaced createdAtBlock, createdBy(), "
+"validAtBlock() and ArkivEntityExpired. (2) Nine invariants execute the sketch against a cited spec — expired "
+"cert never returned, failed exam writes record and no cert, an owner who extends is caught, resale keeps $creator — "
+"all pass. (3) 0.8.0-dev: $expiresAt becomes queryable, atDate() makes the deadline first-class. Nothing is deployed.")
 
 if __name__ == "__main__":
     import sys

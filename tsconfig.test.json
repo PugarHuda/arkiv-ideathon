@@ -9,6 +9,7 @@
     "submissions/selisih.sketch.ts",
     "submissions/layak.sketch.ts",
     "submissions/evidence/memarkiv.ts",
-    "submissions/evidence/invariants.test.ts"
+    "submissions/evidence/invariants.test.ts",
+    "submissions/video/demo/demo.ts"
   ]
 }

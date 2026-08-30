@@ -1,3 +1,7 @@
 node_modules/
 .playwright-mcp/
 dist/
+__pycache__/
+submissions/video/demo/vo/
+submissions/video/demo/vo.m4a
+submissions/video/demo/raw/

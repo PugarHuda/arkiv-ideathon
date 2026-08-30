@@ -1,0 +1,56 @@
+{
+ "voice": "en-US-AndrewNeural",
+ "rate": "+4%",
+ "gap": 0.45,
+ "total": 54.126,
+ "cues": [
+  {
+   "id": "a",
+   "text": "Under Indonesian law every crane carries a fitness certificate. In software that certificate is usually a row with a valid-until column.",
+   "start": 0.0,
+   "end": 8.136
+  },
+  {
+   "id": "b",
+   "text": "LAYAK writes it differently. The certificate's lifetime is its validity period.",
+   "start": 8.586,
+   "end": 13.458
+  },
+  {
+   "id": "c",
+   "text": "This is a real gate check: the same function the invariants run, against the executable spec. Only the lifetime is shortened, so you can watch it.",
+   "start": 13.908,
+   "end": 22.788
+  },
+  {
+   "id": "d",
+   "text": "Green. The crane is cleared, and the card names the inspector who signed it and the block it was written in.",
+   "start": 23.238,
+   "end": 29.43
+  },
+  {
+   "id": "e",
+   "text": "Now watch the query. It never changes, and there is no date in it. Nothing is scheduled. Nothing is going to run.",
+   "start": 29.88,
+   "end": 36.48
+  },
+  {
+   "id": "f",
+   "text": "The blocks tick. The lifetime runs out.",
+   "start": 36.93,
+   "end": 39.474
+  },
+  {
+   "id": "g",
+   "text": "Red. Not a stale row \u2014 an empty set. The certificate no longer exists to be returned, and the chain said so, under the inspector's own key.",
+   "start": 39.924,
+   "end": 49.068
+  },
+  {
+   "id": "h",
+   "text": "No cron. No update. No date comparison. That is the whole idea.",
+   "start": 49.518,
+   "end": 54.126
+  }
+ ]
+}

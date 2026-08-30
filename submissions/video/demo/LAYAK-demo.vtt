@@ -1,0 +1,25 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:08.136
+Under Indonesian law every crane carries a fitness certificate. In software that certificate is usually a row with a valid-until column.
+
+00:00:08.586 --> 00:00:13.458
+LAYAK writes it differently. The certificate's lifetime is its validity period.
+
+00:00:13.908 --> 00:00:22.788
+This is a real gate check: the same function the invariants run, against the executable spec. Only the lifetime is shortened, so you can watch it.
+
+00:00:23.238 --> 00:00:29.430
+Green. The crane is cleared, and the card names the inspector who signed it and the block it was written in.
+
+00:00:29.880 --> 00:00:36.480
+Now watch the query. It never changes, and there is no date in it. Nothing is scheduled. Nothing is going to run.
+
+00:00:36.930 --> 00:00:39.474
+The blocks tick. The lifetime runs out.
+
+00:00:39.924 --> 00:00:49.068
+Red. Not a stale row — an empty set. The certificate no longer exists to be returned, and the chain said so, under the inspector's own key.
+
+00:00:49.518 --> 00:00:54.126
+No cron. No update. No date comparison. That is the whole idea.
