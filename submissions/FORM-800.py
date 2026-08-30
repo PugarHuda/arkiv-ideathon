@@ -76,13 +76,13 @@ S["What deliberately stays off Arkiv"] = (
 "disagreement, not a cartel — attributable readings, not correct ones.")
 
 S["Supporting links (optional)"] = (
-"Write-up, diagrams, charts, code: https://pugarhuda.github.io/arkiv-ideathon/submissions/selisih.html — "
-"Evidence, not description: (1) kill test run twice on real mainnet archive state — Chainlink vs Uniswap up to 423 bps "
-"apart at block 20,459,000; Chainlink's own 31 nodes (decoded from NewTransmission) spread 868 bps at block 20,458,998 "
-"while the feed said $2,233.80; six nodes >200 bps off; median node spread 49.5 bps under stress vs 3.3 calm. Day one, "
-"the witnesses are those nodes, decoded. (2) The TS schema type-checks with tsc --strict against @arkiv-network/sdk@0.7.0 "
-"from npm. (3) Eight invariants execute the sketch against a cited spec of the documented semantics — all pass. "
-"(4) Read against 0.8.0-dev: $expiresAt becomes queryable, $createdAt stays result-only. Nothing is deployed.")
+"Write-up, diagrams, code: https://pugarhuda.github.io/arkiv-ideathon/submissions/selisih.html — Watch it run, unedited: https://pugarhuda.github.io/arkiv-ideathon/submissions/video/#divergence — "
+"31 decoded node readings become 31 attributable entities; the median is drawn, never written. Evidence: (1) kill test "
+"twice on mainnet archive state — Chainlink vs Uniswap 423 bps apart at block 20,459,000; Chainlink's own 31 nodes "
+"(from NewTransmission) spread 868 bps at 20,458,998 while the feed said $2,233.80; six >200 bps off; "
+"node spread 49.5 bps under stress vs 3.3 calm. (2) The TS schema type-checks "
+"with tsc --strict against @arkiv-network/sdk@0.7.0. (3) Eight invariants execute the sketch against a cited spec — "
+"all pass. (4) 0.8.0-dev: $expiresAt becomes queryable. Nothing is deployed.")
 
 # ---------------------------------------------------------------- LAYAK
 L["Idea name"] = "LAYAK"

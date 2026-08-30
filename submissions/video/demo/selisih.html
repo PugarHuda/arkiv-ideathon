@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SELISIH — the disagreement is the product</title>
+<meta name="description" content="The 31 node observations behind one Chainlink ETH/USD print, decoded from mainnet and written as one entity per witness: the divergence board, live.">
+<meta property="og:title" content="SELISIH — the disagreement is the product">
+<meta property="og:description" content="One feed published $2,233.80. Thirty-one nodes had each reported their own, 868 bps apart. Watch the disagreement become the record.">
+<meta property="og:image" content="https://pugarhuda.github.io/arkiv-ideathon/submissions/og-selisih.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root{--bg:#0F1219;--fg:#E3E7ED;--muted:#8C95A3;--accent:#FF7A45;--surface:#161A22;--line:#262D38;
+        --green:#2FBF71;--red:#F0483E;--blue:#5B9DFF}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,Segoe UI,sans-serif;
+       padding:2rem 1.5rem 2.5rem}
+  .wrap{max-width:76rem;margin:0 auto}
+  header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:1.5rem}
+  .eyebrow{font:500 .72rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;
+           color:var(--muted);margin:0 0 .5rem}
+  h1{font-size:1.6rem;margin:0;letter-spacing:-.01em}
+  .sub{margin:.4rem 0 0;color:var(--muted);font-size:.95rem;max-width:46rem}
+  .badge{font:.75rem/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);border:1px solid var(--line);
+         background:var(--surface);padding:.5rem .7rem;border-radius:.35rem;max-width:23rem}
+  .badge b{color:var(--accent);font-weight:600}
+  .grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:1.25rem;align-items:start}
+  @media (max-width:900px){.grid{grid-template-columns:1fr}}
+
+  .card{border:1px solid var(--line);background:var(--surface);border-radius:.5rem;padding:1.4rem}
+  .feed{display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap}
+  #feedPrice{font:600 2.5rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.02em;color:var(--fg)}
+  #feedSub{color:var(--muted);font:.82rem ui-monospace,SFMono-Regular,Menlo,monospace}
+  #txline{color:var(--muted);font:.76rem ui-monospace,SFMono-Regular,Menlo,monospace;margin:.6rem 0 0}
+  #txline b{color:var(--fg)}
+  #plot{margin:.5rem 0 .2rem}
+  svg{width:100%;height:auto;display:block}
+  circle{stroke:none}
+  circle.near{fill:#49566B}
+  circle.far{fill:var(--blue)}
+  circle.out{fill:var(--accent)}
+  circle.gone{fill:none;stroke:#39414F;stroke-width:1;stroke-dasharray:2 2}
+  line.axis{stroke:var(--line);stroke-width:1}
+  line.med{stroke:var(--green);stroke-width:1.5;stroke-dasharray:4 3}
+  text.lbl{fill:var(--green);font:500 10px ui-monospace,SFMono-Regular,Menlo,monospace}
+  text.tick{fill:var(--muted);font:10px ui-monospace,SFMono-Regular,Menlo,monospace}
+
+  table{width:100%;border-collapse:collapse;margin-top:.7rem}
+  th{text-align:left;font:500 .66rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.12em;
+     text-transform:uppercase;color:var(--muted);padding:.5rem .5rem .5rem 0;border-bottom:1px solid var(--line)}
+  td{padding:.42rem .5rem .42rem 0;border-bottom:1px solid rgba(38,45,56,.6);font-size:.84rem}
+  td.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  td.num{text-align:right}
+  td.dev{color:var(--blue)}
+  tr.out td{color:var(--accent)}
+  tr.out td.dev{color:var(--accent);font-weight:600}
+  td.empty{color:var(--muted);text-align:center;padding:1rem 0}
+  .state{margin:.9rem 0 0;font-size:.88rem;border-left:2px solid var(--line);padding-left:.7rem}
+  .state.live{border-left-color:var(--accent);color:var(--muted)}
+  .state.gone{border-left-color:var(--red);color:var(--fg)}
+  .state b{color:var(--fg)}
+
+  .panel{border:1px solid var(--line);background:var(--surface);border-radius:.5rem;padding:1.1rem 1.2rem;margin-bottom:1.25rem}
+  .panel h2{font:500 .72rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;
+            color:var(--muted);margin:0 0 .8rem;display:flex;align-items:center;gap:.5rem}
+  #pulse{width:.5rem;height:.5rem;border-radius:50%;background:var(--accent);flex:none}
+  pre{margin:0;font:.8rem/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--fg);overflow-x:auto}
+  pre .k{color:var(--accent)}pre .c{color:var(--muted)}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem}
+  .stat{border:1px solid var(--line);border-radius:.4rem;padding:.6rem .7rem;background:var(--bg)}
+  .stat i{display:block;font:.62rem/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em;
+          text-transform:uppercase;color:var(--muted);font-style:normal;margin-bottom:.35rem}
+  .stat b{font:1.3rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:600}
+  #events{display:flex;flex-direction:column;gap:.45rem;max-height:10rem;overflow:hidden}
+  .ev{font:.76rem/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);border-left:2px solid var(--line);
+      padding-left:.6rem;overflow-wrap:anywhere}
+  .ev.ok{border-left-color:var(--green)}
+  .ev.warn{border-left-color:var(--accent);color:var(--fg)}
+  .ev.bad{border-left-color:var(--red);color:var(--fg)}
+  .ev .t{color:var(--muted);opacity:.7;margin-right:.4rem}
+  footer{margin-top:1.5rem;border-top:1px solid var(--line);padding-top:1rem;color:var(--muted);font-size:.85rem}
+  footer b{color:var(--fg);font-weight:600}
+  footer a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <p class="eyebrow">SELISIH · Chainlink ETH/USD · block 20,458,998</p>
+      <h1>The disagreement is the product</h1>
+      <p class="sub">One feed published one number. Underneath it, thirty-one nodes had each reported their
+      own. SELISIH writes every reading as its own entity under its own key, so the spread between them is
+      queryable and the outlier is named — never averaged into an error bar.</p>
+    </div>
+    <p class="badge"><b>MemArkiv</b> — the executable spec, cited to the SDK source. Not a deployment.
+    Observations decoded from mainnet; each witness's health factor is <b>its own</b> observed price applied
+    to one stated position (100 WETH, 150,000 USDC debt, 82.5% LT). One lifetime shortened to
+    <b id="ttl">120s</b> so it can be watched.</p>
+  </header>
+
+  <div class="grid">
+    <section class="card">
+      <div class="feed">
+        <span id="feedPrice">—</span>
+        <span id="feedSub">reading the decoded round…</span>
+      </div>
+      <p id="txline">—</p>
+      <div id="plot"></div>
+      <table>
+        <thead><tr><th>$creator</th><th>node</th><th class="num">observed</th><th class="num">HF bps</th><th class="num">dev bps</th></tr></thead>
+        <tbody id="board"></tbody>
+      </table>
+      <p id="outlierState" class="state live">—</p>
+    </section>
+
+    <div>
+      <section class="panel">
+        <h2><span id="pulse"></span> the query — unchanged, every 500&nbsp;ms</h2>
+<pre><span class="c">// selisih.sketch.ts · divergence() · imported</span>
+p.<span class="k">select</span>({ key, creator, attributes, … })
+ .<span class="k">where</span>(
+   <span class="k">eq</span>(<span class="c">"project"</span>, <span class="c">"selisih"</span>),
+   <span class="k">eq</span>(<span class="c">"type"</span>,    <span class="c">"snapshot"</span>),
+   <span class="k">eq</span>(<span class="c">"market"</span>,  <span class="c">"aave-v3-weth"</span>),
+   <span class="k">eq</span>(<span class="c">"round"</span>,   20458998),
+   <span class="k">not</span>(<span class="c">"supersedesRound"</span>))
+ .<span class="k">limit</span>(200).<span class="k">fetch</span>()
+<span class="c">// the median is computed here and NEVER written</span></pre>
+      </section>
+
+      <section class="panel">
+        <h2>the board, right now</h2>
+        <div class="stats">
+          <div class="stat"><i>reporting</i><b id="reporting">—</b></div>
+          <div class="stat"><i>spread bps</i><b id="spread">—</b></div>
+          <div class="stat"><i>median HF</i><b id="medianHf">—</b></div>
+          <div class="stat"><i>pins</i><b id="pins">—</b></div>
+        </div>
+        <p class="state live" style="margin-top:.8rem">block <b id="block">—</b> · median drawn client-side, never stored</p>
+      </section>
+
+      <section class="panel">
+        <h2>events emitted</h2>
+        <div id="events"></div>
+      </section>
+    </div>
+  </div>
+
+  <footer>
+    <b>Never aggregated. Never resolved.</b> SELISIH publishes no canonical number, so there is nothing here
+    to trade against — only attributable readings and the distance between them.
+    Data: <a href="../../evidence/chainlink_round_20458998.json">chainlink_round_20458998.json</a> ·
+    <a href="../../evidence/chainlink_nodes.py">chainlink_nodes.py</a> ·
+    Code: <a href="../../selisih.sketch.ts">selisih.sketch.ts</a> ·
+    <a href="../../evidence/memarkiv.ts">memarkiv.ts</a>
+  </footer>
+</div>
+<script type="module" src="selisih.js"></script>
+</body>
+</html>

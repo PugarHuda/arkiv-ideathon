@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Videos — LAYAK expiry demo &amp; walkthroughs</title>
-<meta name="description" content="One unedited take of a LAYAK certificate expiring, plus narrated walkthroughs of both Arkiv Ideathon entries. Subtitled.">
-<meta property="og:title" content="Videos — LAYAK expiry demo and walkthroughs">
-<meta property="og:description" content="One unedited take of a LAYAK certificate expiring, plus narrated walkthroughs of both Arkiv Ideathon entries. Subtitled.">
+<title>Videos — two demos, two walkthroughs</title>
+<meta name="description" content="Two unedited real-time takes of the designs running — a certificate expiring, and 31 decoded Chainlink node readings disagreeing — plus narrated walkthroughs of both entries. Subtitled.">
+<meta property="og:title" content="Videos — SELISIH and LAYAK, running">
+<meta property="og:description" content="Two unedited real-time takes of the designs running — a certificate expiring, and 31 decoded Chainlink node readings disagreeing — plus narrated walkthroughs of both entries. Subtitled.">
 <meta property="og:image" content="https://pugarhuda.github.io/arkiv-ideathon/submissions/og-selisih.png">
 <meta name="twitter:card" content="summary_large_image">
 <style>
@@ -26,7 +26,7 @@
   <header>
     <p class="eyebrow">Arkiv Ideathon · August 2026</p>
     <h1>Videos</h1>
-    <p>Playwright recordings with a narrated voiceover. Subtitles are a real track — toggle them with the CC button. The first is a demo of the design actually running; the other two are walkthroughs of the live pages. Nothing is deployed and nothing is staged.</p>
+    <p>Playwright recordings with a narrated voiceover. Subtitles are a real track — toggle them with the CC button. The first two are demos of the designs actually running; the last two are walkthroughs of the live pages. Nothing is deployed and nothing is staged.</p>
   </header>
 
   <section class="card" id="expiry">
@@ -43,6 +43,24 @@
     <code>gateCheck()</code> imported unmodified from <a href="../layak.sketch.ts">layak.sketch.ts</a> — the same
     function the 17 invariants run — against <a href="../evidence/memarkiv.ts">MemArkiv</a>, the executable spec.
     Run it yourself: <a href="demo/">demo/</a> (add <code>?ttl=20</code> to shorten the wait).</p>
+  </section>
+
+  <section class="card" id="divergence">
+    <p class="eyebrow">Demo · the claim, running on real mainnet data</p>
+    <h2>The disagreement is the product</h2>
+    <video controls preload="metadata" playsinline poster="../og-selisih.png">
+      <source src="SELISIH-divergence.mp4" type="video/mp4">
+      <track kind="subtitles" src="SELISIH-divergence.vtt" srclang="en" label="English" default>
+      Your browser cannot play this video — <a href="SELISIH-divergence.mp4">download the MP4</a>.
+    </video>
+    <p class="meta" id="divergence-meta">1:18 · 1080p · h264/aac · subtitles: <a href="SELISIH-divergence.vtt">VTT</a> · <a href="SELISIH-divergence.srt">SRT</a> · <a href="SELISIH-divergence.mp4">MP4</a></p>
+    <p class="note">One real-time take. The 31 node observations behind a single Chainlink ETH/USD print —
+    decoded from the <code>NewTransmission</code> log at block 20,458,998, mid-cascade on 5 Aug 2024 — become
+    31 readings, each under its own key, 868 bps apart. The outlier is named by its <code>$creator</code>, the
+    median is drawn and never written, and when the outlier's own lifetime runs out a disputant cannot extend
+    it — only the copy they paid to pin survives. Data:
+    <a href="../evidence/chainlink_round_20458998.json">chainlink_round_20458998.json</a>.
+    Run it yourself: <a href="demo/selisih.html">demo/selisih.html</a>.</p>
   </section>
 
   <section class="card">
@@ -69,7 +87,7 @@
     <p class="note">Page: <a href="../layak.html">layak.html</a></p>
   </section>
 
-  <p class="note">How the demo was made: <a href="demo/narrate.py">narrate.py</a> (neural voiceover + subtitles) and <a href="demo/record.mjs">record.mjs</a> (the capture) — both committed and rerunnable with <code>npm run video:demo</code>. The two walkthroughs predate that pipeline; see the <a href="../../README.md">README</a>.</p>
+  <p class="note">How the demos were made: <a href="demo/narrate.py">narrate.py</a> (neural voiceover + subtitles) and <a href="demo/record.mjs">record.mjs</a> (the capture) — one pipeline, one spec name each, committed and rerunnable with <code>npm run video:demo</code> and <code>npm run video:selisih</code>. The two walkthroughs predate that pipeline; see the <a href="../../README.md">README</a>.</p>
 </div>
 </body>
 </html>

@@ -1,12 +1,13 @@
-// Records the LAYAK expiry demo: a real 1080p screen capture of the page in submissions/video/demo,
-// in real time, with the captions and the intro/outro cards injected into the DOM.
+// Records a demo page: a real 1080p screen capture, in real time, with the captions and the
+// intro/outro cards injected into the DOM.
 //
-// Nothing is sped up, cut or re-timed. The certificate is written with a 40s lifetime and lapses 40s in,
-// which is when the narration says "Red" — the two line up because both read the SAME clock:
-// window.__layakStart, the instant the certificate was written.
+// Nothing is sped up, cut or re-timed. The entity whose lapse the video is about is written with a
+// lifetime taken from the narration itself — TTL is the start of the line that announces it — so the
+// moment on screen and the moment in the voiceover cannot drift. Both read the SAME clock: the page's
+// own start timestamp, the instant the entities were written.
 //
-// Run:  python submissions/video/demo/narrate.py && node submissions/video/demo/record.mjs
-// Out:  submissions/video/LAYAK-expiry.mp4 (+ .srt/.vtt copied beside it)
+// Run:  python submissions/video/demo/narrate.py <spec> && node submissions/video/demo/record.mjs <spec>
+// Out:  submissions/video/<OUT>.mp4 (+ .srt/.vtt beside it)
 
 import { chromium } from "playwright";
 import { createServer } from "node:http";
@@ -17,17 +18,48 @@ import { spawnSync } from "node:child_process";
 
 const HERE = fileURLToPath(new URL(".", import.meta.url));
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
-const OUT = join(ROOT, "submissions", "video", "LAYAK-expiry.mp4");
-const RAW = join(HERE, "raw");
-const TTL = 40;              // seconds of certificate lifetime — lands the lapse on the "Red" line
 const TAIL = 6;              // seconds of outro card after the last narration line
 const TYPES = { ".html": "text/html", ".js": "text/javascript", ".ts": "text/plain", ".json": "application/json" };
 
-const narration = JSON.parse(await readFile(join(HERE, "narration.json"), "utf8"));
-const END = narration.total + TAIL;
+const SPECS = {
+  layak: {
+    page: "/submissions/video/demo/index.html",
+    startVar: "__layakStart", narration: "narration.json", subs: "LAYAK-demo", vo: "vo.m4a",
+    out: "LAYAK-expiry", lapseCue: "g",
+    // the gate stops answering GREEN the moment the certificate leaves the query surface
+    lapse: { el: "code", whileLive: "GREEN" },
+    focus: { c: ".badge", d: "#card", e: ".panel", f: ".panel:nth-of-type(2)", g: "#card", h: "footer" },
+    intro: { kicker: "Arkiv Ideathon &middot; Open lane", h1: "LAYAK",
+             p: "Safety certification that cannot be out of date" },
+    outro: { kicker: "Nothing deployed &middot; nothing staged", h1: "The row is the deadline",
+             p: "Expiry is the storage contract, not a filter someone has to remember." },
+  },
+  selisih: {
+    page: "/submissions/video/demo/selisih.html",
+    startVar: "__selisihStart", narration: "narration.selisih.json", subs: "SELISIH-demo", vo: "vo-selisih.m4a",
+    out: "SELISIH-divergence", lapseCue: "h",
+    // one of the 31 readings stops being served
+    lapse: { el: "reporting", whileLive: "31" },
+    focus: { b: "#plot", c: "table", d: ".panel", e: "#board tr.out", f: ".panel:nth-of-type(2)",
+             g: "#events", h: ".card" },
+    intro: { kicker: "Arkiv Ideathon &middot; Challenge 3 &middot; DeFi", h1: "SELISIH",
+             p: "A multi-witness flight recorder for DeFi risk state" },
+    outro: { kicker: "Nothing deployed &middot; nothing staged", h1: "Never aggregated",
+             p: "The median is drawn, never written. There is no canonical number here to trade against." },
+  },
+};
 
-// which part of the screen each line is talking about — a ring, so the eye goes there
-const FOCUS = { c: ".badge", d: "#card", e: ".panel", f: ".panel:nth-of-type(2)", g: "#card", h: "footer" };
+const NAME = process.argv[2] ?? "layak";
+const CFG = SPECS[NAME];
+if (!CFG) { console.error(`unknown spec ${NAME}; expected one of ${Object.keys(SPECS).join(", ")}`); process.exit(2); }
+
+const OUT = join(ROOT, "submissions", "video", `${CFG.out}.mp4`);
+const RAW = join(HERE, "raw");
+const narration = JSON.parse(await readFile(join(HERE, CFG.narration), "utf8"));
+const END = narration.total + TAIL;
+const lapseCue = narration.cues.find(c => c.id === CFG.lapseCue);
+// the lifetime IS the cue: rounded up to the even number of seconds the SDK requires
+const TTL = Math.ceil(lapseCue.start / 2) * 2;
 
 const server = createServer(async (req, res) => {
   try {
@@ -54,10 +86,10 @@ const problems = [];
 page.on("pageerror", e => problems.push(String(e)));
 page.on("console", m => m.type() === "error" && problems.push(m.text()));
 
-await page.goto(`${base}/submissions/video/demo/index.html?ttl=${TTL}`);
-await page.waitForFunction("window.__layakStart !== undefined");
-const pageStart = await page.evaluate("window.__layakStart");
-// how far into the recording the certificate was written — the voiceover and subtitles get shifted by this
+await page.goto(`${base}${CFG.page}?ttl=${TTL}`);
+await page.waitForFunction(`window.${CFG.startVar} !== undefined`);
+const pageStart = await page.evaluate(`window.${CFG.startVar}`);
+// how far into the recording the entities were written — the voiceover and subtitles shift by this
 const offset = (pageStart - videoStart) / 1000;
 
 await page.addStyleTag({ content: `
@@ -80,26 +112,22 @@ await page.addStyleTag({ content: `
   .cardfs .url{font:1.05rem ui-monospace,SFMono-Regular,Menlo,monospace;color:#FF7A45;margin-top:1.2rem}
 ` });
 
-await page.evaluate(({ cues, focus, total, tail }) => {
+await page.evaluate(({ cues, focus, total, startVar, intro: introCfg, outro: outroCfg }) => {
   const film = document.createElement("div");
   film.id = "film";
   film.innerHTML = `<div id="ring"></div>
     <div class="cardfs on" id="intro">
-      <p class="kicker">Arkiv Ideathon &middot; Open lane</p>
-      <h1>LAYAK</h1>
-      <p>Safety certification that cannot be out of date</p>
+      <p class="kicker">${introCfg.kicker}</p><h1>${introCfg.h1}</h1><p>${introCfg.p}</p>
     </div>
     <div class="cardfs" id="outro">
-      <p class="kicker">Nothing deployed &middot; nothing staged</p>
-      <h1>The row is the deadline</h1>
-      <p>Expiry is the storage contract, not a filter someone has to remember.</p>
+      <p class="kicker">${outroCfg.kicker}</p><h1>${outroCfg.h1}</h1><p>${outroCfg.p}</p>
       <p class="url">pugarhuda.github.io/arkiv-ideathon</p>
     </div>
-    <div id="cap"></div>`;
+    <div id="cap"></div>`;                       // last, so captions sit ON TOP of the cards
   document.body.append(film);
   const cap = film.querySelector("#cap"), ring = film.querySelector("#ring");
   const intro = film.querySelector("#intro"), outro = film.querySelector("#outro");
-  const t0 = window.__layakStart;
+  const t0 = window[startVar];
 
   setInterval(() => {
     const t = (Date.now() - t0) / 1000;
@@ -107,7 +135,7 @@ await page.evaluate(({ cues, focus, total, tail }) => {
     intro.classList.toggle("on", t < cues[1].start - 0.35);
     outro.classList.toggle("on", t > total + 0.4);
     cap.textContent = cue ? cue.text : cap.textContent;
-    cap.classList.toggle("on", !!cue);      // including over the intro card — every spoken line is captioned
+    cap.classList.toggle("on", !!cue);           // including over the intro card — every line is captioned
     const sel = cue && focus[cue.id];
     const el = sel && document.querySelector(sel);
     if (el && t < total + 0.4) {
@@ -117,27 +145,28 @@ await page.evaluate(({ cues, focus, total, tail }) => {
       ring.classList.add("on");
     } else ring.classList.remove("on");
   }, 100);
-}, { cues: narration.cues, focus: FOCUS, total: narration.total, tail: TAIL });
+}, { cues: narration.cues, focus: CFG.focus, total: narration.total, startVar: CFG.startVar,
+     intro: CFG.intro, outro: CFG.outro });
 
-// let it run, in real time, and record when the gate actually flipped
-const flipAt = await page.evaluate(end => new Promise(resolve => {
-  const t0 = window.__layakStart;
-  let flip = null;
+// let it run, in real time, and record when the entity actually left the query surface
+const flipAt = await page.evaluate(({ end, startVar, lapse }) => new Promise(resolve => {
+  const t0 = window[startVar];
+  let armed = false, flip = null;                // arm only once the page has finished booting
   const iv = setInterval(() => {
     const t = (Date.now() - t0) / 1000;
-    if (flip === null && document.getElementById("code").textContent !== "GREEN") flip = t;
+    const now = document.getElementById(lapse.el).textContent.trim();
+    if (!armed) armed = now === lapse.whileLive;
+    else if (flip === null && now !== lapse.whileLive) flip = t;
     if (t >= end) { clearInterval(iv); resolve(flip); }
   }, 100);
-}), END);
+}), { end: END, startVar: CFG.startVar, lapse: CFG.lapse });
 
 await context.close();
 await browser.close();
 server.close();
 
-const cueG = narration.cues.find(c => c.id === "g");
-console.log(`certificate lapsed at t=${flipAt?.toFixed(2)}s; the "Red" line starts at ${cueG.start}s`);
+console.log(`[${NAME}] ttl ${TTL}s; entity lapsed at t=${flipAt?.toFixed(2)}s; the "${CFG.lapseCue}" line starts at ${lapseCue.start}s`);
 if (problems.length) console.log("page problems:", problems);
-
 console.log(`voiceover and captions start ${offset.toFixed(3)}s into the recording`);
 
 // The subtitles are shifted HERE rather than with ffmpeg's -itsoffset: muxing a text stream with an input
@@ -152,8 +181,8 @@ const shift = s => {
 };
 const sidecar = {};
 for (const ext of ["srt", "vtt"]) {
-  const text = await readFile(join(HERE, `LAYAK-demo.${ext}`), "utf8");
-  sidecar[ext] = join(ROOT, "submissions", "video", `LAYAK-expiry.${ext}`);
+  const text = await readFile(join(HERE, `${CFG.subs}.${ext}`), "utf8");
+  sidecar[ext] = join(ROOT, "submissions", "video", `${CFG.out}.${ext}`);
   await writeFile(sidecar[ext], text.replace(/\d{2}:\d{2}:\d{2}[.,]\d{3}/g, shift), "utf8");
 }
 
@@ -163,7 +192,7 @@ const run = (...args) => {
   const r = spawnSync("ffmpeg", ["-y", "-v", "error", ...args], { stdio: "inherit" });
   if (r.status !== 0) { console.error("ffmpeg failed"); process.exit(r.status ?? 1); }
 };
-run("-i", raw, "-itsoffset", offset.toFixed(3), "-i", join(HERE, "vo.m4a"),
+run("-i", raw, "-itsoffset", offset.toFixed(3), "-i", join(HERE, CFG.vo),
     "-map", "0:v", "-map", "1:a",
     "-c:v", "libx264", "-preset", "medium", "-crf", "21", "-pix_fmt", "yuv420p", "-r", "30",
     "-c:a", "aac", "-b:a", "160k", tmp);

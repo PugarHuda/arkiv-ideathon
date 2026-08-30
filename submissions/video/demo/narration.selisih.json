@@ -1,0 +1,56 @@
+{
+ "voice": "en-US-AndrewNeural",
+ "rate": "+4%",
+ "gap": 0.45,
+ "total": 70.83,
+ "cues": [
+  {
+   "id": "a",
+   "text": "On the fifth of August 2024, mid-cascade, Chainlink's ETH/USD feed published a single number for the whole market to act on.",
+   "start": 0.0,
+   "end": 9.216
+  },
+  {
+   "id": "b",
+   "text": "Underneath it, thirty-one nodes had each reported their own, decoded here from the NewTransmission log at block 20,458,998.",
+   "start": 9.666,
+   "end": 20.274
+  },
+  {
+   "id": "c",
+   "text": "They spread 868 basis points. Six were more than 200 from the median. The feed keeps the median and throws the rest away.",
+   "start": 20.724,
+   "end": 29.124
+  },
+  {
+   "id": "d",
+   "text": "SELISIH writes every reading as its own entity, under its own key. The same query now returns the disagreement itself.",
+   "start": 29.574,
+   "end": 37.422
+  },
+  {
+   "id": "e",
+   "text": "The outlier is not flagged by us. It is named by its creator, which cannot be edited or handed to anyone else.",
+   "start": 37.872,
+   "end": 44.76
+  },
+  {
+   "id": "f",
+   "text": "The median is drawn on this screen and never written, so there is no canonical number here for anyone to trade against.",
+   "start": 45.21,
+   "end": 51.93
+  },
+  {
+   "id": "g",
+   "text": "And a reading cannot be quietly withdrawn. A disputant already tried to extend this one and was refused, so it paid to pin its own copy instead.",
+   "start": 52.38,
+   "end": 60.972
+  },
+  {
+   "id": "h",
+   "text": "Now the outlier's lifetime runs out. Thirty of thirty-one. Nothing was deleted, the chain simply stopped serving it, and the copy someone else paid for is still here.",
+   "start": 61.422,
+   "end": 70.83
+  }
+ ]
+}

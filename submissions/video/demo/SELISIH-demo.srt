@@ -1,0 +1,31 @@
+1
+00:00:00,000 --> 00:00:09,216
+On the fifth of August 2024, mid-cascade, Chainlink's ETH/USD feed published a single number for the whole market to act on.
+
+2
+00:00:09,666 --> 00:00:20,274
+Underneath it, thirty-one nodes had each reported their own, decoded here from the NewTransmission log at block 20,458,998.
+
+3
+00:00:20,724 --> 00:00:29,124
+They spread 868 basis points. Six were more than 200 from the median. The feed keeps the median and throws the rest away.
+
+4
+00:00:29,574 --> 00:00:37,422
+SELISIH writes every reading as its own entity, under its own key. The same query now returns the disagreement itself.
+
+5
+00:00:37,872 --> 00:00:44,760
+The outlier is not flagged by us. It is named by its creator, which cannot be edited or handed to anyone else.
+
+6
+00:00:45,210 --> 00:00:51,930
+The median is drawn on this screen and never written, so there is no canonical number here for anyone to trade against.
+
+7
+00:00:52,380 --> 00:01:00,972
+And a reading cannot be quietly withdrawn. A disputant already tried to extend this one and was refused, so it paid to pin its own copy instead.
+
+8
+00:01:01,422 --> 00:01:10,830
+Now the outlier's lifetime runs out. Thirty of thirty-one. Nothing was deleted, the chain simply stopped serving it, and the copy someone else paid for is still here.
