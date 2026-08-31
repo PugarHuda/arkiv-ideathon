@@ -83,7 +83,7 @@ S["What deliberately stays off Arkiv"] = (
 
 S["Supporting links (optional)"] = (
 "Write-up, diagrams, code: https://pugarhuda.github.io/arkiv-ideathon/submissions/selisih.html — Watch it run on that "
-"round, unedited: https://pugarhuda.github.io/arkiv-ideathon/submissions/video/#divergence — 31 decoded node readings "
+"round, unedited: https://pugarhuda.github.io/arkiv-ideathon/submissions/video/selisih.html — 31 decoded node readings "
 "become 31 attributable entities; the median is drawn, never written. Evidence: (1) kill test twice on mainnet archive "
 "state — Chainlink vs Uniswap 423 bps apart at block 20,459,000; Chainlink's own 31 nodes spread 868 bps at 20,458,998 "
 "while the feed said $2,233.80. (2) The TS schema type-checks with tsc --strict against @arkiv-network/sdk@0.7.0. "
@@ -157,7 +157,7 @@ L["What deliberately stays off Arkiv"] = (
 
 L["Supporting links (optional)"] = (
 "Write-up, diagrams, code: https://pugarhuda.github.io/arkiv-ideathon/submissions/layak.html — Watch the claim run, "
-"unedited: https://pugarhuda.github.io/arkiv-ideathon/submissions/video/#expiry — a certificate goes green, then red, "
+"unedited: https://pugarhuda.github.io/arkiv-ideathon/submissions/video/layak.html — a certificate goes green, then red, "
 "while the query on screen never changes and no date is compared. Evidence: (1) the TS schema type-checks with tsc "
 "--strict against @arkiv-network/sdk@0.7.0, which surfaced createdAtBlock, createdBy(), validAtBlock() and "
 "ArkivEntityExpired. (2) Nine invariants execute the sketch against a cited spec — expired cert never returned, failed "

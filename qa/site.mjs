@@ -26,7 +26,7 @@ if (!base) {
   base = `http://127.0.0.1:${server.address().port}`;
 }
 
-const PAGES = ["/index.html", "/submissions/selisih.html", "/submissions/layak.html", "/submissions/video/index.html", "/submissions/video/demo/index.html", "/submissions/video/demo/selisih.html", "/submissions/evidence/index.html"];
+const PAGES = ["/index.html", "/submissions/selisih.html", "/submissions/layak.html", "/submissions/video/index.html", "/submissions/video/layak.html", "/submissions/video/selisih.html", "/submissions/video/demo/index.html", "/submissions/video/demo/selisih.html", "/submissions/evidence/index.html"];
 const VIEWPORTS = [{ name: "iphone13", device: devices["iPhone 13"] }, { name: "929", viewport: { width: 929, height: 909 } }, { name: "1440", viewport: { width: 1440, height: 900 } }];
 const fails = []; const note = (ok, msg) => { console.log(`${ok ? "  ok " : "FAIL "} ${msg}`); if (!ok) fails.push(msg); };
 

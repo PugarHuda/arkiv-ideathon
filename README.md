@@ -45,7 +45,9 @@ submissions/
   video/LAYAK-expiry.mp4          one real-time take: a 40-second certificate goes green, then red
   video/SELISIH-divergence.mp4    one real-time take: 31 decoded node readings, 868 bps apart, and the outlier
                                   lapsing while the pin a disputant paid for survives
-  video/                          index.html player · LAYAK.mp4 · SELISIH.mp4 (+ .srt/.vtt) — Playwright recordings of the live pages with an
+  video/layak.html                one page per entry — a judge reviewing one track never lands on the other's
+  video/selisih.html              videos. index.html is a thin hub linking the two.
+  video/                          LAYAK.mp4 · SELISIH.mp4 (+ .srt/.vtt) — Playwright recordings of the live pages with an
                                   injected pointer and burned-in captions, neural voiceover (Edge TTS), a toggleable
                                   English subtitle track, and Remotion intro/outro cards. 1080p, ~2:17 each. Nothing staged.
 ```
