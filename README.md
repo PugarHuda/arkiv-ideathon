@@ -29,9 +29,10 @@ submissions/
   02-other-layak.md               full LAYAK write-up (source of truth)
   FORM-selisih.md                 SELISIH answers mapped to the Tally form's fields (long versions)
   FORM-layak.md                   LAYAK answers mapped to the Tally form's fields (long versions)
-  FORM-800.py                     what actually gets pasted: every long-text field trimmed to Tally's
-                                  800-char cap. `python submissions/FORM-800.py` prints each field with
-                                  its count and exits 1 if any field is over.
+  FORM-700.py                     what actually gets pasted: every long-text field trimmed to Tally's
+                                  real 700-char cap (the form rejects more), plus its two tooling
+                                  questions. `python submissions/FORM-700.py` prints each field with its
+                                  count and exits 1 if any field is over.
   selisih.html / layak.html       the published artifact pages (diagrams, charts, embedded code)
   selisih.sketch.ts               entity-model sketch — type-checks against @arkiv-network/sdk@0.7.0
   layak.sketch.ts                 entity-model sketch — type-checks against @arkiv-network/sdk@0.7.0
